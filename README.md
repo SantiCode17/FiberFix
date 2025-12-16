@@ -45,8 +45,11 @@ El sistema valida y registra esta información en un servidor central.
 ## Formato del mensaje (provisional)
 
 Los datos se envían como texto plano:
+
 ID_TECNICO|ID_TICKET|LATITUD|LONGITUD|TIMESTAMP
+
 Ejemplo:
+
 TEC123|TICK987|39.4699|-0.3763|2025-12-16T10:45:00
 
 ---
@@ -54,9 +57,13 @@ TEC123|TICK987|39.4699|-0.3763|2025-12-16T10:45:00
 ## Equipo
 
 Proyecto realizado por un equipo de 4 personas como parte de un trabajo académico:
+
 CARLOS FERNÁNDEZ HERVÁS
+
 ANDREI FELIPE STAICU
+
 MARÍA JURADO IBÁÑEZ
+
 SANTIAGO SÁNCHEZ MARCH
 
 ---
