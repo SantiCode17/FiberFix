@@ -74,3 +74,100 @@ SANTIAGO SÁNCHEZ MARCH
 - React Native
 - MySQL
 - Git / GitHub
+
+---
+
+# Guía básica de uso de Git para el proyecto
+
+## Ramas del proyecto
+
+* **main**: base del proyecto (documentación, configuración inicial)
+* **feature**: integración de nuevas funcionalidades
+* **release**: preparación para testing
+* **production**: código en producción
+
+**Nunca se programa directamente en `main`, `release` o `production`.**
+
+---
+
+## Flujo de trabajo recomendado
+
+### 1. Actualizar repositorio local
+
+```bash
+git fetch origin
+git pull origin feature
+```
+
+---
+
+### 2. Crear una rama para una tarea
+
+Siempre desde `feature`:
+
+```bash
+git checkout feature
+git checkout -b feature-nombre-tarea
+```
+
+Ejemplos:
+
+* `feature-login`
+* `feature-expo-gps`
+* `feature-socket-reconnect`
+
+---
+
+### 3. Programar y guardar cambios
+
+```bash
+git status
+git add .
+git commit -m "Descripción clara del cambio"
+```
+
+---
+
+### 4. Subir la rama al repositorio remoto
+
+```bash
+git push origin feature-nombre-tarea
+```
+
+---
+
+### 5. Finalizar una tarea
+
+1. Crear Pull Request:
+
+   * **Origen**: `feature-nombre-tarea`
+   * **Destino**: `feature`
+
+2. Tras el merge, borrar la rama:
+
+```bash
+git branch -d feature-nombre-tarea
+git push origin --delete feature-nombre-tarea
+```
+
+---
+
+## Buenas prácticas
+
+* Una rama por tarea
+* Commits pequeños y claros
+* Actualizar `feature` frecuentemente
+* No forzar pushes (`--force`)
+
+---
+
+## Comandos útiles
+
+```bash
+git branch            # ver ramas locales
+git branch -a         # ver ramas locales y remotas
+git checkout nombre   # cambiar de rama
+git log --oneline     # ver historial compacto
+git status            # ver estado actual
+```
+
