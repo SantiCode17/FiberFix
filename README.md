@@ -77,25 +77,28 @@ SANTIAGO SÁNCHEZ MARCH
 
 ---
 
-# Guía básica de uso de Git para el proyecto
+## Flujo de trabajo recomendado
 
-## Ramas del proyecto
-
-* **main**: base del proyecto (documentación, configuración inicial)
-* **feature**: integración de nuevas funcionalidades
-* **release**: preparación para testing
-* **production**: código en producción
-
-**Nunca se programa directamente en `main`, `release` o `production`.**
+Este repositorio **ya existe en remoto**, por lo que el primer paso siempre será clonarlo. Todo el desarrollo se hace siguiendo un flujo basado en ramas `feature` y `release`.
 
 ---
 
-## Flujo de trabajo recomendado
+### 0. Clonar el repositorio
 
-### 1. Actualizar repositorio local
+```bash
+git clone <url-del-repositorio>
+cd FiberFix
+```
+
+---
+
+### 1. Mantener el repositorio local actualizado
+
+Antes de empezar cualquier tarea, asegúrate de tener la rama `feature` actualizada:
 
 ```bash
 git fetch origin
+git checkout feature
 git pull origin feature
 ```
 
@@ -103,22 +106,17 @@ git pull origin feature
 
 ### 2. Crear una rama para una tarea
 
-Siempre desde `feature`:
+Cada desarrollador debe crear **su propia rama** a partir de `feature`. Siempre una rama por tarea.
 
 ```bash
 git checkout feature
 git checkout -b feature-nombre-tarea
 ```
-
-Ejemplos:
-
-* `feature-login`
-* `feature-expo-gps`
-* `feature-socket-reconnect`
-
 ---
 
 ### 3. Programar y guardar cambios
+
+Durante el desarrollo, guarda los cambios con commits pequeños y descriptivos:
 
 ```bash
 git status
@@ -128,36 +126,59 @@ git commit -m "Descripción clara del cambio"
 
 ---
 
-### 4. Subir la rama al repositorio remoto
+### 4. Integrar cambios en `feature` (sin subir tu rama al remoto)
+
+Las ramas de tarea **NO se suben al repositorio remoto**. Todo el proceso se hace por consola y solo se sube `feature`.
+
+1. Asegúrate de tener `feature` actualizada:
 
 ```bash
-git push origin feature-nombre-tarea
+git checkout feature
+git pull origin feature
 ```
+
+2. Vuelve a tu rama y rebasea (opcional pero recomendado):
+
+```bash
+git checkout feature-nombre-tarea
+git rebase feature
+```
+
+3. Fusiona tu rama en `feature`:
+
+```bash
+git checkout feature
+git merge feature-nombre-tarea
+````
 
 ---
 
-### 5. Finalizar una tarea
+### 5. Subir cambios a remoto y limpiar ramas
 
-1. Crear Pull Request:
+1. Subir **solo la rama `feature`** al repositorio remoto:
 
-   * **Origen**: `feature-nombre-tarea`
-   * **Destino**: `feature`
+```bash
+git push origin feature
+````
 
-2. Tras el merge, borrar la rama:
+2. Eliminar la rama local de la tarea (una vez integrado):
 
 ```bash
 git branch -d feature-nombre-tarea
-git push origin --delete feature-nombre-tarea
 ```
+
+> De esta forma, el repositorio remoto solo contiene ramas principales (`feature`, `release`, etc.)
 
 ---
 
 ## Buenas prácticas
 
-* Una rama por tarea
-* Commits pequeños y claros
-* Actualizar `feature` frecuentemente
-* No forzar pushes (`--force`)
+- Una rama por tarea
+- Cada desarrollador trabaja en su propia rama
+- Commits pequeños y claros
+- Mantener `feature` actualizada frecuentemente
+- No forzar pushes (`--force`)
+- No trabajar directamente sobre `feature` ni `release`
 
 ---
 
@@ -169,5 +190,4 @@ git branch -a         # ver ramas locales y remotas
 git checkout nombre   # cambiar de rama
 git log --oneline     # ver historial compacto
 git status            # ver estado actual
-```
-
+````
