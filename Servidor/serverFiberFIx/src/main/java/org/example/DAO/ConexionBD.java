@@ -8,22 +8,21 @@ public class ConexionBD {
     private static Connection conn = null;
 
     private static final String driver="com.mysql.cj.jdbc.Driver";
-    private static final String user="";
-    private static final String pass="";
-    private static final String url="jdbc:mysql://localhost:3306/";
+    private static final String url="jdbc:mysql://localhost:";
 
-    private ConexionBD(){
+    private ConexionBD(String user, String pass, String port) {
+        String fullUrl=url+port+"/FiberFix";
         try{
             Class.forName(driver);
-            conn= DriverManager.getConnection(url,user,pass);
+            conn= DriverManager.getConnection(fullUrl,user,pass);
         } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static Connection getConnection(){
+    public static Connection getConnection(String user, String pass, String port){
         if (conn==null){
-            new ConexionBD();
+            new ConexionBD(user,pass,port);
         }
         return conn;
     }
