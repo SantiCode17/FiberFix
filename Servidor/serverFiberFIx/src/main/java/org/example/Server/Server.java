@@ -1,16 +1,34 @@
 package org.example.Server;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Server {
-    private static final int PUERTO = 5000;
+
 
     public static void main(String[] args) {
         System.out.println("Servidor iniciado...");
 
-        try (ServerSocket serverSocket = new ServerSocket(PUERTO)) {
+        //Leer puerto de fichero
+        int puerto = 0;
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("server.properties"));
+            String linea;
+            while ((linea = br.readLine()) != null){
+                if (linea.contains("SERVER-PORT")){
+                    puerto = Integer.parseInt(linea.split(":")[1]);
+                }
+            }
+
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        try (ServerSocket serverSocket = new ServerSocket(puerto)) {
 
             while (true) {
                 // Espera a que un cliente se conecte
