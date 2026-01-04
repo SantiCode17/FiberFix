@@ -12,6 +12,7 @@ import {
   TouchableWithoutFeedback,
   View
 } from 'react-native';
+import * as TcpSocket from 'react-native-tcp-socket';
 
 export default function TicketScreen() {
 
@@ -22,15 +23,62 @@ export default function TicketScreen() {
   // EVIDENCIA 2
   const { location, errorMsg, loading } = useLocation();
 
-  const handleAction = () => {
-    if (!isWorking && ticketNumber.trim()) {
+  const handleStart = () => {
+    if (ticketNumber.trim()) {
       setIsWorking(true);
       Keyboard.dismiss();
-    } else if (isWorking) {
-      setIsWorking(false);
-      setTicketNumber('');
     }
+
+    console.log('Trabajo iniciado para el ticket:', ticketNumber);
   };
+
+  const handleFinish = () => {
+    // Envío al servidor    
+    const parte = buildWorkReport();
+
+    if (!parte) {
+      console.log('No se pudo construir el parte de trabajo')
+      return;
+    }
+
+    console.log('Parte de trabajo:', parte);
+    sendBySocket(parte);
+
+    setIsWorking(false);
+    setTicketNumber('');
+  };
+
+  const sendBySocket = (message: string) => {
+    const SERVER_IP = '192.168.1.146';
+    const SERVER_PORT = 5000;
+
+    console.log('Intentando conectar al servidor');
+
+    const cliente = TcpSocket.createConnection({
+        host: SERVER_IP,
+        port: SERVER_PORT,
+        timeout: 5000
+      }, () => {
+      cliente.write(message + '\n');
+      cliente.end();
+    })
+
+    cliente.on('error', (error) => {
+      console.log('Error en la conexión TCP:', error);
+    })
+  }
+
+  const buildWorkReport = () => {
+    if (!location) return null;
+
+    const idTecnico = 'TEC001';
+    const idTicket = ticketNumber;
+    const lat = location.coords.latitude;
+    const lon = location.coords.longitude;
+    const timestamp = new Date().toISOString();
+
+    return `${idTecnico}|${idTicket}|${lat}|${lon}|${timestamp}`;
+  }
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -118,7 +166,7 @@ export default function TicketScreen() {
         <View className="px-8 pb-12 pt-4">
           <View className="flex-row gap-4">
             <TouchableOpacity
-              onPress={handleAction}
+              onPress={handleStart}
               disabled={isWorking || !ticketNumber}
               className={`flex-1 h-24 rounded-[30px] flex-row items-center justify-center ${
                 !isWorking && ticketNumber ? 'bg-fiber-orange' : 'bg-gray-200'
@@ -128,7 +176,7 @@ export default function TicketScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={handleAction}
+              onPress={handleFinish}
               disabled={!isWorking}
               className={`flex-1 h-24 rounded-[30px] flex-row items-center justify-center ${
                 isWorking ? 'bg-fiber-blue' : 'bg-gray-200'
