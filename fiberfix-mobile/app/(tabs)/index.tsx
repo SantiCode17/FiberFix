@@ -36,10 +36,9 @@ export default function TicketScreen() {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View className="flex-1 bg-white">
 
-        {/* DEBUG GPS (puedes ocultarlo luego) */}
+        {/* DEBUG GPS */}
         {errorMsg && <Text className="text-red-500 text-center">{errorMsg}</Text>}
         {loading && <Text className="text-center">Obteniendo ubicación...</Text>}
-        {location && <LocationInfo location={location} />}
 
         {/* FONDO */}
         <View className="absolute inset-0 flex-row flex-wrap opacity-5">
@@ -105,9 +104,12 @@ export default function TicketScreen() {
 
             <View className="flex-row items-center justify-center bg-fiber-gray py-4 px-6 rounded-2xl border border-fiber-border">
               <IconSymbol name="mappin.and.ellipse" size={20} color="#002F6C" />
-              <Text className="text-fiber-blue font-black text-[10px] ml-3 uppercase tracking-widest">
-                {location ? "GPS ACTIVO" : "UBICACIÓN EN ESPERA"}
-              </Text>
+              <View className="ml-3">
+                <Text className="text-fiber-blue font-black text-[10px] uppercase tracking-widest">
+                  {location ? "GPS ACTIVO" : "UBICACIÓN EN ESPERA"}
+                </Text>
+                {location && <LocationInfo location={location} />}
+              </View>
             </View>
           </View>
         </KeyboardAvoidingView>
