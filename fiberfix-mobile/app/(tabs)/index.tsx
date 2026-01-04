@@ -62,11 +62,14 @@ export default function TicketScreen() {
     try {
       const cliente = TcpSocket.createConnection({
         host: SERVER_IP,
-        port: SERVER_PORT,
+        port: SERVER_PORT
       }, () => {
         console.log('Conectado al servidor TCP');
         cliente.write(message + '\n');
-        cliente.end();
+        // Esperar un poco antes de cerrar
+        setTimeout(() => {
+          cliente.end();
+        }, 100);
       });
 
       cliente.on('data', (data) => {
