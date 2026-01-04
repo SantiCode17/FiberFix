@@ -1,6 +1,6 @@
 import { LocationInfo } from '@/components/LocationInfo';
-import { useLocation } from '@/hooks/useLocation';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useLocation } from '@/hooks/useLocation';
 import React, { useState } from 'react';
 import {
   Keyboard,
@@ -12,7 +12,7 @@ import {
   TouchableWithoutFeedback,
   View
 } from 'react-native';
-import * as TcpSocket from 'react-native-tcp-socket';
+import TcpSocket from 'react-native-tcp-socket';
 
 export default function TicketScreen() {
 
@@ -52,21 +52,39 @@ export default function TicketScreen() {
     const SERVER_IP = '192.168.1.146';
     const SERVER_PORT = 5000;
 
+    if (!TcpSocket || !TcpSocket.createConnection) {
+      console.log('TcpSocket no está disponible.');
+      return;
+    }
+
     console.log('Intentando conectar al servidor');
 
-    const cliente = TcpSocket.createConnection({
+    try {
+      const cliente = TcpSocket.createConnection({
         host: SERVER_IP,
         port: SERVER_PORT,
-        timeout: 5000
       }, () => {
-      cliente.write(message + '\n');
-      cliente.end();
-    })
+        console.log('Conectado al servidor TCP');
+        cliente.write(message + '\n');
+        cliente.end();
+      });
 
-    cliente.on('error', (error) => {
-      console.log('Error en la conexión TCP:', error);
-    })
-  }
+      cliente.on('data', (data) => {
+        console.log('Respuesta del servidor:', data.toString());
+      });
+
+      cliente.on('error', (error) => {
+        console.log('Error en la conexión TCP:', error);
+      });
+
+      cliente.on('close', () => {
+        console.log('Conexión TCP cerrada');
+      });
+
+    } catch (error) {
+      console.error('Error al crear la conexión:', error);
+    }
+  };
 
   const buildWorkReport = () => {
     if (!location) return null;
