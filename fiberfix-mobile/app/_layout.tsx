@@ -8,6 +8,8 @@ export default function RootLayout() {
   return (
     <View style={{ flex: 1, backgroundColor: '#002F6C' }}>
       <Stack screenOptions={{ headerShown: false }}>
+        {/* El orden importa: Login es la primera pantalla */}
+        <Stack.Screen name="login" />
         <Stack.Screen name="(tabs)" />
       </Stack>
       <StatusBar style="light" />
