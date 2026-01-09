@@ -23,9 +23,9 @@ public class Server {
             }
 
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            Log.escribirLog(e.getMessage());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            Log.escribirLog(e.getMessage());
         }
 
         try (ServerSocket serverSocket = new ServerSocket(puerto)) {
@@ -42,7 +42,7 @@ public class Server {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.escribirLog(e.getMessage());
         }
     }
 

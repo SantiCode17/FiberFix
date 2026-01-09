@@ -34,13 +34,13 @@ public class Cliente implements Runnable{
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.escribirLog(e.getMessage());
         } finally {
             try {
                 socket.close();
                 System.out.println("Cliente desconectado");
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (IOException e){
+                Log.escribirLog(e.getMessage());
             }
         }
     }
