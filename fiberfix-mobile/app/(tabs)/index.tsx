@@ -1,7 +1,7 @@
 import { LocationInfo } from '@/components/LocationInfo';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useLocation } from '@/hooks/useLocation';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -15,108 +15,88 @@ import {
 import TcpSocket from 'react-native-tcp-socket';
 
 export default function TicketScreen() {
-
   const isConnected = true;
   const [ticketNumber, setTicketNumber] = useState('');
   const [isWorking, setIsWorking] = useState(false);
+  
+  // Estado para Feedback Visual
+  const [statusMessage, setStatusMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
-  // EVIDENCIA 2
-  const { location, errorMsg, loading } = useLocation();
+  const { location } = useLocation();
+
+  // Autolimpieza del mensaje
+  useEffect(() => {
+    if (statusMessage) {
+      const timer = setTimeout(() => setStatusMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [statusMessage]);
 
   const handleStart = () => {
     if (ticketNumber.trim()) {
       setIsWorking(true);
+      setStatusMessage(null);
       Keyboard.dismiss();
     }
-
-    console.log('Trabajo iniciado para el ticket:', ticketNumber);
   };
 
   const handleFinish = () => {
-    // Envío al servidor    
     const parte = buildWorkReport();
-
     if (!parte) {
-      console.log('No se pudo construir el parte de trabajo')
+      setStatusMessage({ text: "ERROR: SIN SEÑAL GPS", type: 'error' });
       return;
     }
-
-    console.log('Parte de trabajo:', parte);
     sendBySocket(parte);
-
-    setIsWorking(false);
-    setTicketNumber('');
   };
 
   const sendBySocket = (message: string) => {
-    const SERVER_IP = '192.168.1.146';
+    const SERVER_IP = '192.168.1.146'; // Asegúrate de que esta IP es la de tu PC actual
     const SERVER_PORT = 5000;
-
-    if (!TcpSocket || !TcpSocket.createConnection) {
-      console.log('TcpSocket no está disponible.');
-      return;
-    }
-
-    console.log('Intentando conectar al servidor');
 
     try {
       const cliente = TcpSocket.createConnection({
         host: SERVER_IP,
         port: SERVER_PORT
       }, () => {
-        console.log('Conectado al servidor TCP');
         cliente.write(message + '\n');
-        // Esperar un poco antes de cerrar
-        setTimeout(() => {
-          cliente.end();
-        }, 100);
       });
 
-      cliente.on('data', (data) => {
-        console.log('Respuesta del servidor:', data.toString());
+      cliente.on('data', () => {
+        setStatusMessage({ text: "TODO REALIZADO CON ÉXITO", type: 'success' });
+        setIsWorking(false);
+        setTicketNumber('');
+        cliente.end();
       });
 
-      cliente.on('error', (error) => {
-        console.log('Error en la conexión TCP:', error);
-      });
-
-      cliente.on('close', () => {
-        console.log('Conexión TCP cerrada');
+      cliente.on('error', () => {
+        setStatusMessage({ text: "ERROR: FALLO DE ENVÍO", type: 'error' });
       });
 
     } catch (error) {
-      console.error('Error al crear la conexión:', error);
+      setStatusMessage({ text: "ERROR: NO HAY CONEXIÓN", type: 'error' });
     }
   };
 
   const buildWorkReport = () => {
     if (!location) return null;
-
-    const idTecnico = 'TEC001';
-    const idTicket = ticketNumber;
-    const lat = location.coords.latitude;
-    const lon = location.coords.longitude;
-    const timestamp = new Date().toISOString();
-
-    return `${idTecnico}|${idTicket}|${lat}|${lon}|${timestamp}`;
+    return `TEC001|${ticketNumber}|${location.coords.latitude}|${location.coords.longitude}|${new Date().toISOString()}`;
   }
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View className="flex-1 bg-white">
 
-        {/* DEBUG GPS */}
-        {errorMsg && <Text className="text-red-500 text-center">{errorMsg}</Text>}
-        {loading && <Text className="text-center">Obteniendo ubicación...</Text>}
-
-        {/* FONDO */}
+        {/* Fondo Técnico */}
         <View className="absolute inset-0 flex-row flex-wrap opacity-5">
           {[...Array(100)].map((_, i) => (
             <View key={i} className="w-20 h-20 border border-gray-400" />
           ))}
         </View>
 
-        {/* CABECERA */}
+        {/* Cabecera */}
         <View className="bg-fiber-blue pt-16 pb-12 px-8 rounded-b-[40px] shadow-lg">
           <View className="flex-row justify-between items-center">
             <View>
@@ -128,24 +108,24 @@ export default function TicketScreen() {
               </Text>
             </View>
 
-            <View className="flex-row items-center px-4 py-2 rounded-2xl bg-white/10 border border-white/20">
+            <View className={`flex-row items-center px-4 py-2 rounded-2xl border ${isConnected ? 'bg-status-success/10 border-status-success' : 'bg-status-error/10 border-status-error'}`}>
               <View className={`w-2.5 h-2.5 rounded-full mr-2 ${isConnected ? 'bg-status-success' : 'bg-status-error'}`} />
-              <Text className="text-white font-black text-[10px] tracking-widest">
+              <Text className={`font-black text-[10px] tracking-widest ${isConnected ? 'text-status-success' : 'text-status-error'}`}>
                 {isConnected ? 'ONLINE' : 'OFFLINE'}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* CUERPO */}
+        {/* Cuerpo Principal */}
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
           className="flex-1 justify-center px-8"
           style={{ marginTop: -20 }}
         >
-          <View className="bg-white rounded-[40px] p-10 border border-fiber-border shadow-2xl">
+          <View className="bg-white rounded-[40px] p-10 border border-gray-100 shadow-2xl">
             <View className="items-center mb-8">
-              <View className={`p-5 rounded-full ${isWorking ? 'bg-green-100' : 'bg-orange-100'}`}>
+              <View className={`p-5 rounded-3xl ${isWorking ? 'bg-green-50' : 'bg-orange-50'}`}>
                 <IconSymbol
                   name="doc.text.fill"
                   size={42}
@@ -158,8 +138,11 @@ export default function TicketScreen() {
               <Text className="text-fiber-blue font-black text-center text-xs uppercase tracking-[0.3em] mb-4">
                 Nº Ticket Trabajo
               </Text>
+              
+              {/* INPUT CORREGIDO: padding 0 y textAlign center para evitar desplazamiento */}
               <TextInput
-                className={`text-7xl font-black text-center p-2 ${isWorking ? 'text-fiber-blue' : 'text-fiber-orange'}`}
+                className={`text-7xl font-black ${isWorking ? 'text-fiber-blue' : 'text-fiber-orange'}`}
+                style={{ textAlign: 'center', padding: 0, margin: 0 }}
                 placeholder="000"
                 placeholderTextColor="#F1F5F9"
                 value={ticketNumber}
@@ -167,11 +150,11 @@ export default function TicketScreen() {
                 keyboardType="numeric"
                 editable={!isWorking}
                 maxLength={6}
-                textAlign="center"
               />
+              <View className="h-1.5 w-24 bg-fiber-orange/20 rounded-full self-center mt-2" />
             </View>
 
-            <View className="flex-row items-center justify-center bg-fiber-gray py-4 px-6 rounded-2xl border border-fiber-border">
+            <View className="flex-row items-center justify-center bg-gray-50 py-4 px-6 rounded-2xl border border-gray-100">
               <IconSymbol name="mappin.and.ellipse" size={20} color="#002F6C" />
               <View className="ml-3">
                 <Text className="text-fiber-blue font-black text-[10px] uppercase tracking-widest">
@@ -181,29 +164,51 @@ export default function TicketScreen() {
               </View>
             </View>
           </View>
+
+          {/* Zona de Notificación (Respetando el espacio visual) */}
+          <View className="h-20 justify-center items-center mt-4">
+            {statusMessage && (
+              <View className={`flex-row items-center px-6 py-3 rounded-2xl ${
+                statusMessage.type === 'success' ? 'bg-status-success/10' : 'bg-status-error/10'
+              }`}>
+                <IconSymbol 
+                  name={statusMessage.type === 'success' ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"} 
+                  size={20} 
+                  color={statusMessage.type === 'success' ? '#22C55E' : '#D50000'} 
+                />
+                <Text className={`font-black text-sm ml-2 ${
+                  statusMessage.type === 'success' ? 'text-status-success' : 'text-status-error'
+                }`}>
+                  {statusMessage.text}
+                </Text>
+              </View>
+            )}
+          </View>
         </KeyboardAvoidingView>
 
-        {/* BOTONES */}
+        {/* Botones de Acción */}
         <View className="px-8 pb-12 pt-4">
           <View className="flex-row gap-4">
             <TouchableOpacity
               onPress={handleStart}
               disabled={isWorking || !ticketNumber}
-              className={`flex-1 h-24 rounded-[30px] flex-row items-center justify-center ${
+              className={`flex-1 h-24 rounded-[30px] flex-row items-center justify-center border-b-8 border-black/10 ${
                 !isWorking && ticketNumber ? 'bg-fiber-orange' : 'bg-gray-200'
               }`}
             >
-              <Text className="font-black text-xl text-white">Empezar</Text>
+              <IconSymbol name="play.fill" size={24} color={!isWorking && ticketNumber ? 'white' : '#94A3B8'} />
+              <Text className={`font-black text-xl ml-2 ${!isWorking && ticketNumber ? 'text-white' : 'text-gray-400'}`}>Empezar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={handleFinish}
               disabled={!isWorking}
-              className={`flex-1 h-24 rounded-[30px] flex-row items-center justify-center ${
+              className={`flex-1 h-24 rounded-[30px] flex-row items-center justify-center border-b-8 border-black/10 ${
                 isWorking ? 'bg-fiber-blue' : 'bg-gray-200'
               }`}
             >
-              <Text className="font-black text-xl text-white">Finalizar</Text>
+              <IconSymbol name="stop.fill" size={24} color={isWorking ? 'white' : '#94A3B8'} />
+              <Text className={`font-black text-xl ml-2 ${isWorking ? 'text-white' : 'text-gray-400'}`}>Finalizar</Text>
             </TouchableOpacity>
           </View>
         </View>
