@@ -77,117 +77,88 @@ SANTIAGO SÁNCHEZ MARCH
 
 ---
 
-## Flujo de trabajo recomendado
+# Flujo de trabajo recomendado
 
-Este repositorio **ya existe en remoto**, por lo que el primer paso siempre será clonarlo. Todo el desarrollo se hace siguiendo un flujo basado en ramas `feature` y `release`.
+Este repositorio ya existe en remoto, por lo que el primer paso siempre será clonarlo. Todo el desarrollo se hace siguiendo un flujo basado en ramas `feature` y `release`.
 
----
-
-### 0. Clonar el repositorio
-
+## 0. Clonar el repositorio
 ```bash
 git clone <url-del-repositorio>
 cd FiberFix
 ```
 
----
+## 1. Mantener el repositorio local actualizado
 
-### 1. Mantener el repositorio local actualizado
-
-Antes de empezar cualquier tarea, asegúrate de tener la rama `feature` actualizada:
-
+Antes de empezar cualquier tarea, asegúrate de tener la rama `release` actualizada:
 ```bash
 git fetch origin
-git checkout feature
-git pull origin feature
+git checkout release
+git pull origin release
 ```
 
----
+## 2. Crear una rama para una tarea
 
-### 2. Crear una rama para una tarea
-
-Cada desarrollador debe crear **su propia rama** a partir de `feature`. Siempre una rama por tarea.
-
+Cada desarrollador debe crear su propia rama a partir de `release`. Siempre una rama por tarea, siguiendo el formato: `feature-nombre-tarea-nombre-desarrollador` para más claridad del respto de cmpañeros.
 ```bash
-git checkout feature
-git checkout -b feature-nombre-tarea
+git checkout release
+git checkout -b feature-login-maria
 ```
----
 
-### 3. Programar y guardar cambios
+## 3. Programar y guardar cambios
 
 Durante el desarrollo, guarda los cambios con commits pequeños y descriptivos:
-
 ```bash
 git status
 git add .
 git commit -m "Descripción clara del cambio"
 ```
 
----
+## 4. Integrar cambios en `release` (sin subir tu rama al remoto)
 
-### 4. Integrar cambios en `feature` (sin subir tu rama al remoto)
+Las ramas de tarea **NO** se suben al repositorio remoto. Todo el proceso se hace por consola y solo se sube `release`.
 
-Las ramas de tarea **NO se suben al repositorio remoto**. Todo el proceso se hace por consola y solo se sube `feature`.
-
-1. Asegúrate de tener `feature` actualizada:
-
+1. Asegúrate de tener `release` actualizada:
 ```bash
-git checkout feature
-git pull origin feature
+git checkout release
+git pull origin release
 ```
 
-2. Vuelve a tu rama y rebasea (opcional pero recomendado):
-
+2. Fusiona tu rama en `release`:
 ```bash
-git checkout feature-nombre-tarea
-git rebase feature
+git checkout release
+git merge feature-login-maria
 ```
 
-3. Fusiona tu rama en `feature`:
+## 5. Subir cambios a remoto y limpiar ramas
 
+1. Subir solo la rama `release` al repositorio remoto:
 ```bash
-git checkout feature
-git merge feature-nombre-tarea
-````
-
----
-
-### 5. Subir cambios a remoto y limpiar ramas
-
-1. Subir **solo la rama `feature`** al repositorio remoto:
-
-```bash
-git push origin feature
-````
+git push origin release
+```
 
 2. Eliminar la rama local de la tarea (una vez integrado):
-
 ```bash
-git branch -d feature-nombre-tarea
+git branch -d feature-login-maria
 ```
 
-> De esta forma, el repositorio remoto solo contiene ramas principales (`feature`, `release`, etc.)
-
----
+De esta forma, el repositorio remoto solo contiene la rama principal `release` y las ramas de desarrollo individuales nunca se suben.
 
 ## Buenas prácticas
 
-- Una rama por tarea
-- Cada desarrollador trabaja en su propia rama
+- **Una rama por tarea**
+- Cada desarrollador trabaja en su propia rama con su nombre
 - Commits pequeños y claros
-- Mantener `feature` actualizada frecuentemente
+- Mantener `release` actualizada frecuentemente
 - No forzar pushes (`--force`)
-- No trabajar directamente sobre `feature` ni `release`
-
----
+- No trabajar directamente sobre `release`
+- Formato de nombres: `feature-descripcion-nombre`
 
 ## Comandos útiles
-
 ```bash
 git branch            # ver ramas locales
 git branch -a         # ver ramas locales y remotas
 git checkout nombre   # cambiar de rama
 git log --oneline     # ver historial compacto
 git status            # ver estado actual
-````
+git branch -d nombre  # eliminar rama local
+```
