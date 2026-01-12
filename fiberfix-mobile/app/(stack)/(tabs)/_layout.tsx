@@ -1,4 +1,3 @@
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Tabs } from 'expo-router';
 import React from 'react';
 
@@ -18,8 +17,8 @@ export default function TabLayout() {
         tabBarInactiveTintColor: '#94A3B8',
         tabBarLabelStyle: { fontWeight: '900', fontSize: 10, textTransform: 'uppercase', marginBottom: 15 }
       }}>
-      <Tabs.Screen name="index" options={{ title: 'Tarea', tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} /> }} />
-      <Tabs.Screen name="explore" options={{ title: 'Historial', tabBarIcon: ({ color }) => <IconSymbol size={28} name="clock.fill" color={color} /> }} />
+      <Tabs.Screen name='home/index' options={{ title: 'Home' }} />
+      <Tabs.Screen name='historial/explore' options={{ title: 'Historial' }} />
     </Tabs>
   );
 }
