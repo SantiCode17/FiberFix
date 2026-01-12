@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function TabLayout() {
   return (
@@ -15,10 +16,22 @@ export default function TabLayout() {
         },
         tabBarActiveTintColor: '#FF6D00',
         tabBarInactiveTintColor: '#94A3B8',
-        tabBarLabelStyle: { fontWeight: '900', fontSize: 10, textTransform: 'uppercase', marginBottom: 15 }
+        tabBarLabelStyle: { fontWeight: '900', fontSize: 10, textTransform: 'uppercase', marginBottom: 15 },
       }}>
-      <Tabs.Screen name='home/index' options={{ title: 'Home' }} />
-      <Tabs.Screen name='historial/explore' options={{ title: 'Historial' }} />
+      <Tabs.Screen
+        name='home/index'
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => <Ionicons name="home" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name='historial/explore'
+        options={{
+          title: 'Historial',
+          tabBarIcon: ({ color, size }) => <Ionicons name="time" color={color} size={size} />,
+        }}
+      />
     </Tabs>
   );
 }
