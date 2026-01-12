@@ -11,14 +11,68 @@ import {
     TouchableWithoutFeedback,
     View
 } from 'react-native';
+import TcpSocket from 'react-native-tcp-socket';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
 
+  // Estado para Feedback Visual
+  const [statusMessage, setStatusMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
+
+  const sendLoginBySocket = (
+    user: string,
+    pass: string,
+    onSuccess: () => void,
+    onError: () => void
+  ) => {
+    const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP;
+    const SERVER_PORT = Number(process.env.EXPO_PUBLIC_SERVER_PORT);
+
+    try {
+      const client = TcpSocket.createConnection(
+       { host: SERVER_IP, port: SERVER_PORT },
+      () => {
+        client.write(`LOGIN|${user}|${pass}\n`);
+      });
+
+      client.on('data', (data) => {
+        const response = data.toString().trim();
+        if (response.startsWith('LOGIN_OK')) {
+          onSuccess();
+        } else {
+          onError();
+        }
+        client.end();
+      });
+
+      client.on('error', onError)
+
+    } catch (error) {
+      onError();
+    }
+  };
+
   const handleLogin = () => {
-    router.replace('/(tabs)');
+    if (!userId || !password) {
+      setStatusMessage({ text: 'Introduce usuario y contraseña.', type: 'error' });
+      return;
+    }
+
+    sendLoginBySocket(
+      userId,
+      password,
+      () => {
+        setStatusMessage({ text: 'Login correcto', type: 'success' });
+        router.replace('/home');
+      }, () => {
+        setStatusMessage({ text: 'Credenciales incorrectas.', type: 'error' });
+      }
+    )
   };
 
   return (
@@ -90,6 +144,27 @@ export default function LoginScreen() {
                 Entrar al Sistema
               </Text>
             </TouchableOpacity>
+
+            {/* Mensaje de estado del login */}
+            {statusMessage && (
+              <View
+                className={`mt-6 px-6 py-3 rounded-2xl ${
+                  statusMessage.type === 'success'
+                    ? 'bg-status-success/10'
+                    : 'bg-status-error/10'
+                }`}
+              >
+                <Text
+                  className={`font-black text-center ${
+                    statusMessage.type === 'success'
+                      ? 'text-status-success'
+                      : 'text-status-error'
+                  }`}
+                >
+                  {statusMessage.text}
+                </Text>
+              </View>
+            )}
 
           </View>
         </KeyboardAvoidingView>

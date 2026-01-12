@@ -53,8 +53,8 @@ export default function TicketScreen() {
   };
 
   const sendBySocket = (message: string) => {
-    const SERVER_IP = '192.168.1.146'; // Asegúrate de que esta IP es la de tu PC actual
-    const SERVER_PORT = 5000;
+    const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP;
+    const SERVER_PORT = Number(process.env.EXPO_PUBLIC_SERVER_PORT);
 
     try {
       const cliente = TcpSocket.createConnection({
