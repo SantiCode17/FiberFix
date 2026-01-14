@@ -43,4 +43,4 @@ app-example
 /android
 
 # credentials
-.env
+#.env en trabajos reales esto no se subiría, pero aquí sí para facilitar el trabajo
