@@ -1,5 +1,8 @@
 package org.example.Server;
 
+import org.example.DAO.PosicionDAO;
+import org.example.DAO.TecnicoDAO;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -22,26 +25,71 @@ public class Cliente implements Runnable{
                 PrintWriter salida = new PrintWriter(
                         socket.getOutputStream(), true)
         ) {
-            String mensaje;
+            String mensaje = entrada.readLine();
+            System.out.println("Cliente dice: " + mensaje);
 
-            while ((mensaje = entrada.readLine()) != null) {
-                System.out.println("Cliente dice: " + mensaje);
-                salida.println("Servidor recibió: " + mensaje);
+            if (mensaje != null && mensaje.startsWith("LOGIN|")) {
+                String[] partes = mensaje.split("\\|");
+                String usuario = partes[1];
+                String pass = partes[2];
 
-                if (mensaje.equalsIgnoreCase("salir")) {
-                    break;
+                boolean valido = TecnicoDAO.loginCorrecto(usuario, pass);
+
+                if (valido) {
+                    System.out.println("LOGIN_OK");
+                    salida.println("LOGIN_OK");
+                } else {
+                    System.out.println("LOGIN_ERROR");
+                    salida.println("LOGIN_ERROR");
                 }
+            } else {
+                salida.println("ERROR_FORMATO");
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             Log.escribirLog(e.getMessage());
         } finally {
             try {
                 socket.close();
                 System.out.println("Cliente desconectado");
-            } catch (IOException e){
+            } catch (IOException e) {
                 Log.escribirLog(e.getMessage());
             }
+        }
+    }
+
+    public void procesarLogin(String mensaje, PrintWriter salida) {
+        try {
+            String[] partes = mensaje.split("\\|");
+            String usuario = partes[1];
+            String pass = partes[2];
+
+            if (TecnicoDAO.loginCorrecto(usuario, pass)){
+                salida.println("LOGIN_OK");
+            }else{
+                salida.println("LOGIN_FAIL");
+            }
+        }catch (Exception e){
+            Log.escribirLog(e.getMessage());
+            salida.println("LOGIN_FAIL");
+        }
+    }
+
+    public void procesarParteTrabajo(String mensaje, PrintWriter salida) {
+        try{
+            String[] partes = mensaje.split("\\|");
+
+            String tecnico = partes[0];
+            int ticket = Integer.parseInt(partes[1]);
+            double lat = Double.parseDouble(partes[2]);
+            double lon = Double.parseDouble(partes[3]);
+
+            PosicionDAO.guardarPosicion(tecnico,ticket,lat,lon);
+
+            salida.println("OK");
+        }catch (Exception e){
+            Log.escribirLog(e.getMessage());
+            salida.println("ERROR");
         }
     }
 }

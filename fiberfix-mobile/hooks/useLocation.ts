@@ -17,14 +17,16 @@ export function useLocation() {
             }
 
             // Obtener ubicación actual
-            //let loc = await Location.getCurrentPositionAsync({});
-
+            let loc = await Location.getCurrentPositionAsync({});
+            
+            // Ubicación para pruebas
+            /* 
             let loc = {
                 coords: {
                 latitude: 40.4168,
                 longitude: -3.7038,
                 },
-            };
+            };*/
 
             setLocation(loc as Location.LocationObject);
             setLoading(false);

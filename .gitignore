@@ -1,0 +1,6 @@
+# Ignorar los datos de MySQL/Docker
+docker_listo/mysql-rds/data/
+
+# Ignorar contenedores y volúmenes locales
+docker_listo/mysql-rds/logs/
+docker_listo/mysql-rds/tmp/
