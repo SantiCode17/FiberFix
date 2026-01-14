@@ -1,12 +1,14 @@
 services:
   mysql:
     image: mysql:8.0
-    container_name: add-dbms
+    container_name: ${MYSQL_HOST}
+    env_file:
+      - .env
     environment:
-      MYSQL_ROOT_PASSWORD: dbrootpass
-      MYSQL_DATABASE: FiberFix
-      MYSQL_USER: dbuser
-      MYSQL_PASSWORD: dbpass
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "33006:3306"
     volumes:

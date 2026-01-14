@@ -1,0 +1,10 @@
+# Logs
+*.log
+
+# MySQL / Docker volumes
+docker_listo/mysql-rds/data/
+**/data/db/
+**/mysql/
+
+# Docker
+.env
