@@ -1,0 +1,55 @@
+14/01/26:10:29:34 java.lang.RuntimeException: com.mysql.cj.jdbc.exceptions.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+14/01/26:10:35:21 java.lang.RuntimeException: com.mysql.cj.jdbc.exceptions.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+14/01/26:10:40:35 java.lang.RuntimeException: com.mysql.cj.jdbc.exceptions.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+14/01/26:10:40:39 java.lang.RuntimeException: com.mysql.cj.jdbc.exceptions.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+14/01/26:10:41:50 java.lang.RuntimeException: com.mysql.cj.jdbc.exceptions.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+14/01/26:11:21:16 java.lang.RuntimeException: com.mysql.cj.jdbc.exceptions.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+14/01/26:11:21:30 java.lang.RuntimeException: com.mysql.cj.jdbc.exceptions.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+14/01/26:11:25:00 java.lang.RuntimeException: com.mysql.cj.jdbc.exceptions.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+14/01/26:11:27:14 java.lang.RuntimeException: com.mysql.cj.jdbc.exceptions.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+14/01/26:11:31:57 java.lang.RuntimeException: com.mysql.cj.jdbc.exceptions.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+14/01/26:11:32:02 java.lang.RuntimeException: Error al conectar con la base de datos: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+14/01/26:11:32:12 java.lang.RuntimeException: Error al conectar con la base de datos: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+14/01/26:11:41:20 Error al conectar con la base de datos: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+14/01/26:11:41:20 Error al inicializar la conexión con la base de datos
+14/01/26:11:42:06 Error al conectar con la base de datos: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+14/01/26:11:42:11 Error al inicializar la conexión con la base de datos
+14/01/26:11:42:22 Error al conectar con la base de datos: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+14/01/26:11:42:24 Error al inicializar la conexión con la base de datos
+14/01/26:11:45:56 Conexión exitosa a la base de datos: jdbc:mysql://localhost:33006/FiberFix
+14/01/26:11:55:17 No operations allowed after connection closed.
+14/01/26:11:55:24 No operations allowed after connection closed.
+14/01/26:12:03:48 Conexión cerrada o nula detectada. Reintentando conexión...
+14/01/26:12:03:49 Conexión reestablecida a la base de datos: jdbc:mysql://localhost:33006/FiberFix
+14/01/26:12:06:44 Conexión cerrada o nula detectada. Reintentando conexión...
+14/01/26:12:06:44 Conexión reestablecida a la base de datos: jdbc:mysql://localhost:33006/FiberFix
