@@ -1,3 +1,4 @@
+
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import React from 'react';
 import { Text, View } from 'react-native';
@@ -12,9 +13,11 @@ export default function ExploreScreen() {
         ))}
       </View>
 
-      <View className="bg-fiber-blue pt-16 pb-20 px-8 rounded-b-[40px] shadow-lg">
-        <Text className="text-white text-4xl font-black tracking-tighter">HISTORIAL</Text>
-        <Text className="text-fiber-orange text-xs font-bold tracking-[0.4em] uppercase">Registro de Operaciones</Text>
+      <View className="bg-fiber-blue pt-16 pb-12 px-8 rounded-b-[40px] shadow-lg">
+        <View>
+            <Text className="text-white text-4xl font-black tracking-tighter">HISTORIAL</Text>
+            <Text className="text-fiber-orange text-[10px] font-bold tracking-[0.4em] uppercase">Registro de Operaciones</Text>
+        </View>
       </View>
 
       <View className="flex-1 items-center justify-center px-10">

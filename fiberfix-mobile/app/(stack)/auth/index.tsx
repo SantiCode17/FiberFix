@@ -75,7 +75,7 @@ export default function LoginScreen() {
     )
   };
 
-  return (
+    return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View className="flex-1 bg-fiber-blue justify-center">
         
@@ -89,6 +89,7 @@ export default function LoginScreen() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           className="p-6 z-10"
         >
+          {/* LOGO */}
           <View className="items-center mb-12">
             <Text className="text-white text-6xl font-black tracking-tighter italic">
               FIBER<Text className="text-fiber-orange">FIX</Text>
@@ -99,16 +100,18 @@ export default function LoginScreen() {
             </Text>
           </View>
 
-          <View className="bg-white rounded-[50px] p-12 shadow-2xl border-4 border-white/10">
+          {/* TARJETA DE ACCESO */}
+          <View className="bg-white rounded-[40px] p-10 shadow-2xl border-4 border-white/10">
             
-            <View className="mb-8">
-              <Text className="text-fiber-blue font-black text-sm uppercase tracking-widest mb-4 ml-2">
+            {/* Input ID */}
+            <View className="mb-6">
+              <Text className="text-fiber-blue font-black text-xs uppercase tracking-widest mb-3 ml-2">
                 ID de Operario
               </Text>
-              <View className="flex-row items-center bg-gray-50 rounded-[25px] border-2 border-gray-100 px-6 h-20">
-                <IconSymbol name="house.fill" size={28} color="#64748B" />
+              <View className="flex-row items-center bg-gray-50 rounded-[20px] border-2 border-gray-100 px-4 h-16">
+                <IconSymbol name="house.fill" size={24} color="#64748B" />
                 <TextInput
-                  className="flex-1 ml-4 text-2xl font-bold text-fiber-dark"
+                  className="flex-1 ml-4 text-xl font-bold text-fiber-dark"
                   placeholder="Ej: TEC-001"
                   placeholderTextColor="#CBD5E1"
                   value={userId}
@@ -118,14 +121,15 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            <View className="mb-12">
-              <Text className="text-fiber-blue font-black text-sm uppercase tracking-widest mb-4 ml-2">
+            {/* Input Contraseña */}
+            <View className="mb-10">
+              <Text className="text-fiber-blue font-black text-xs uppercase tracking-widest mb-3 ml-2">
                 Contraseña
               </Text>
-              <View className="flex-row items-center bg-gray-50 rounded-[25px] border-2 border-gray-100 px-6 h-20">
-                <IconSymbol name="doc.text.fill" size={28} color="#64748B" />
+              <View className="flex-row items-center bg-gray-50 rounded-[20px] border-2 border-gray-100 px-4 h-16">
+                <IconSymbol name="doc.text.fill" size={24} color="#64748B" />
                 <TextInput
-                  className="flex-1 ml-4 text-2xl font-bold text-fiber-dark"
+                  className="flex-1 ml-4 text-xl font-bold text-fiber-dark"
                   placeholder="••••••••"
                   placeholderTextColor="#CBD5E1"
                   value={password}
@@ -135,43 +139,24 @@ export default function LoginScreen() {
               </View>
             </View>
 
+            {/* Botón Entrar */}
             <TouchableOpacity 
               onPress={handleLogin}
               activeOpacity={0.8}
-              className="bg-fiber-orange h-24 rounded-[35px] flex-row items-center justify-center border-b-8 border-[#CC5500] shadow-lg shadow-orange-500/30"
+              className="bg-fiber-orange h-20 rounded-[25px] flex-row items-center justify-center border-b-8 border-[#CC5500] shadow-lg shadow-orange-500/30"
             >
-              <Text className="text-white font-black text-3xl uppercase tracking-tighter">
+              <Text className="text-white font-black text-2xl uppercase tracking-tighter">
                 Entrar al Sistema
               </Text>
             </TouchableOpacity>
 
-            {/* Mensaje de estado del login */}
-            {statusMessage && (
-              <View
-                className={`mt-6 px-6 py-3 rounded-2xl ${
-                  statusMessage.type === 'success'
-                    ? 'bg-status-success/10'
-                    : 'bg-status-error/10'
-                }`}
-              >
-                <Text
-                  className={`font-black text-center ${
-                    statusMessage.type === 'success'
-                      ? 'text-status-success'
-                      : 'text-status-error'
-                  }`}
-                >
-                  {statusMessage.text}
-                </Text>
-              </View>
-            )}
-
           </View>
         </KeyboardAvoidingView>
 
+        {/* Footer */}
         <View className="absolute bottom-10 left-0 right-0 items-center">
           <Text className="text-white/30 font-bold text-[10px] uppercase tracking-widest">
-            FiberFix Secure OS v2.0 — Solo Personal Autorizado
+            FiberFix Secure OS v2.0
           </Text>
         </View>
 
