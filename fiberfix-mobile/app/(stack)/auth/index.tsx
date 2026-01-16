@@ -68,7 +68,7 @@ export default function LoginScreen() {
       password,
       () => {
         setStatusMessage({ text: 'Login correcto', type: 'success' });
-        router.replace('/home');
+        router.replace({ pathname: '../home', params: { userId } });
       }, () => {
         setStatusMessage({ text: 'Credenciales incorrectas.', type: 'error' });
       }
