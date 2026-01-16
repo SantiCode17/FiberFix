@@ -25,6 +25,7 @@ export default function TicketScreen() {
   const isConnected = true;
   const [ticketNumber, setTicketNumber] = useState('');
   const [description, setDescription] = useState('');
+  const [motivo, setMotivo] = useState('');
   const [isWorking, setIsWorking] = useState(false);
   
   // Estado para Feedback Visual
@@ -68,11 +69,11 @@ export default function TicketScreen() {
       setStatusMessage({ text: "ERROR: SIN SEÑAL GPS", type: 'error' });
       return null;
     }
-    if (!description.trim()) {
+    if (!description.trim() || !motivo.trim()) {
       setStatusMessage({ text: "Debe rellenar el por qué se interrumpe el ticket.", type: 'error' });
       return null;
     }
-    return `${userId}|${ticketNumber}|${description}|${new Date().toISOString()}|INTERRUMPIDO}`;
+    return `${userId}|${ticketNumber}|${motivo}||${description}|${new Date().toISOString()}|INTERRUMPIDO}`;
   }
 
   const sendBySocket = (message: string) => {
