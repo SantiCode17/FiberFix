@@ -17,25 +17,19 @@ import {
   View
 } from 'react-native';
 import TcpSocket from 'react-native-tcp-socket';
-
-// IMPORTANTE: Esto soluciona el error del Modal
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function TicketScreen() {
   //const { userId } = useLocalSearchParams(); CUANDO ACABEMOS LAS PRUEBAS DEJAREMOS ESTA LINEA
-
   // Mientras hacemos pruebas entramos directamente a home. Ponemos un usuario por defecto mientras tanto
   const { userId: userIdParam } = useLocalSearchParams();
   const userId = userIdParam || 'TEC001';
 
-  const isConnected = true;
   const [ticketNumber, setTicketNumber] = useState('');
-  const [description, setDescription] = useState('');
-  const [motivo, setMotivo] = useState('');
   const [isWorking, setIsWorking] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' | 'warning' } | null>(null);
-  
-  // --- ESTADOS PARA MODAL INCIDENCIA ---
+
+  // --- ESTADOS PARA INCIDENCIA ---
   const [showIncidentModal, setShowIncidentModal] = useState(false);
   const [incidentReason, setIncidentReason] = useState('');
   const [incidentNote, setIncidentNote] = useState('');
@@ -43,7 +37,7 @@ export default function TicketScreen() {
 
   // Hook de ubicación
   const { location } = useLocation();
-  const isOnline = !!location; 
+  const isOnline = !!location;
 
   const QUICK_REASONS = ["Cliente Ausente", "Instalación Rota", "Falta Material", "Sin Acceso", "Perro Suelto", "Otros"];
 
@@ -54,39 +48,16 @@ export default function TicketScreen() {
     }
   }, [statusMessage]);
 
-  const openIncidentModal = () => {
-    setIncidentReason(''); 
-    setIncidentNote('');
-    setAttachedImage(false);
-    setShowIncidentModal(true);
-  };
-
-  const toggleAttachment = () => {
-    setAttachedImage(!attachedImage);
-  };
-
-  const submitIncident = () => {
-    if (!incidentReason && !incidentNote.trim()) {
-      Alert.alert("Faltan datos", "Selecciona un motivo o escribe una descripción.");
-      return;
-    }
-    
-    const finalReason = incidentReason || "Incidencia Personalizada";
-
-    console.log(`Incidencia: Ticket ${ticketNumber} | ${finalReason} | Img: ${attachedImage}`);
-    setStatusMessage({ text: "INCIDENCIA REGISTRADA", type: 'warning' });
-    setShowIncidentModal(false);
-    setIsWorking(false);
-    setTicketNumber('');
-  };
-
+  
   // Crea o accede al ticket
   const handleStart = () => {
-    const parte = buildWorkReport();
-    if (!parte) {
+    if (!location) {
       setStatusMessage({ text: "ERROR: SIN SEÑAL GPS", type: 'error' });
       return;
     }
+    
+    const parte = `${userId}|${ticketNumber}|${location.coords.latitude}|${location.coords.longitude}|${new Date().toISOString()}|PENDIENTE`;
+    
     sendBySocket(parte);
   };
 
@@ -96,24 +67,42 @@ export default function TicketScreen() {
       setStatusMessage({ text: "ERROR: SIN SEÑAL GPS", type: 'error' });
       return null;
     }
-    return `${userId}|${ticketNumber}|${new Date().toISOString()}|FINALIZADO`;
+    const parte = `${userId}|${ticketNumber}|${new Date().toISOString()}|FINALIZADO`;
+    
+    sendBySocket(parte);
   };
 
-  const handleInterrupted = () => {
-    if (!location) {
-      setStatusMessage({ text: "ERROR: SIN SEÑAL GPS", type: 'error' });
-      return null;
+  // Interrumpir el ticket
+  const openIncidentModal = () => {
+    setIncidentReason('');
+    setIncidentNote('');
+    setAttachedImage(false);
+    setShowIncidentModal(true);
+  };
+
+  const toggleAttachment = () => {
+    setAttachedImage(!attachedImage); // Sin implementación real
+  };
+
+  const submitIncident = () => {
+    if (!incidentReason && !incidentNote.trim()) {
+      Alert.alert("Faltan datos", "Selecciona un motivo o escribe una descripción.");
+      return;
     }
-    if (!description.trim() || !motivo.trim()) {
-      setStatusMessage({ text: "Debe rellenar el por qué se interrumpe el ticket.", type: 'error' });
-      return null;
-    }
-    return `${userId}|${ticketNumber}|${motivo}||${description}|${new Date().toISOString()}|INTERRUMPIDO}`;
-  }
+
+    setStatusMessage({ text: "INCIDENCIA REGISTRADA", type: 'warning' });
+    setShowIncidentModal(false);
+    setIsWorking(false);
+    setTicketNumber('');
+
+    const parte = `${userId}|${ticketNumber}|${incidentReason}||${incidentNote}|${new Date().toISOString()}|INTERRUMPIDO}`;
+    
+    sendBySocket(parte);
+  };
 
   const sendBySocket = (message: string) => {
-    const SERVER_IP = '192.168.1.146'; 
-    const SERVER_PORT = 5000;
+    const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP;
+    const SERVER_PORT = Number(process.env.EXPO_PUBLIC_SERVER_PORT);
 
     if (!TcpSocket) return;
 
@@ -130,11 +119,6 @@ export default function TicketScreen() {
       cliente.on('error', () => { setStatusMessage({ text: "ERROR DE ENVÍO", type: 'error' }); });
     } catch (error) { setStatusMessage({ text: "ERROR DE CONEXIÓN", type: 'error' }); }
   };
-
-  const buildWorkReport = () => {
-    if (!location) return null;
-    return `${userId}|${ticketNumber}|${location.coords.latitude}|${location.coords.longitude}|${new Date().toISOString()}`;
-  }
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -173,8 +157,7 @@ export default function TicketScreen() {
               <Text className="text-fiber-blue font-black text-center text-xs uppercase tracking-[0.3em] mb-4">
                 Nº Ticket Trabajo
               </Text>
-              
-              {/* INPUT CORREGIDO: padding 0 y textAlign center para evitar desplazamiento */}
+
               <TextInput
                 className={`text-7xl font-black ${isWorking ? 'text-fiber-blue' : 'text-fiber-orange'}`}
                 style={{ textAlign: 'center', padding: 0, margin: 0, includeFontPadding: false }}
@@ -200,17 +183,15 @@ export default function TicketScreen() {
           {/* Zona de Notificación */}
           <View className="h-16 justify-center items-center mt-4">
             {statusMessage && (
-              <View className={`flex-row items-center px-6 py-3 rounded-2xl ${
-                statusMessage.type === 'error' ? 'bg-red-100' : statusMessage.type === 'warning' ? 'bg-yellow-100' : 'bg-green-100'
-              }`}>
-                <IconSymbol 
-                  name={statusMessage.type === 'error' ? "exclamationmark.triangle.fill" : "checkmark.circle.fill"} 
-                  size={20} 
-                  color={statusMessage.type === 'error' ? '#DC2626' : statusMessage.type === 'warning' ? '#D97706' : '#22C55E'} 
+              <View className={`flex-row items-center px-6 py-3 rounded-2xl ${statusMessage.type === 'error' ? 'bg-red-100' : statusMessage.type === 'warning' ? 'bg-yellow-100' : 'bg-green-100'
+                }`}>
+                <IconSymbol
+                  name={statusMessage.type === 'error' ? "exclamationmark.triangle.fill" : "checkmark.circle.fill"}
+                  size={20}
+                  color={statusMessage.type === 'error' ? '#DC2626' : statusMessage.type === 'warning' ? '#D97706' : '#22C55E'}
                 />
-                <Text className={`font-black text-sm ml-2 ${
-                  statusMessage.type === 'error' ? 'text-red-700' : statusMessage.type === 'warning' ? 'text-yellow-700' : 'text-green-700'
-                }`}>{statusMessage.text}</Text>
+                <Text className={`font-black text-sm ml-2 ${statusMessage.type === 'error' ? 'text-red-700' : statusMessage.type === 'warning' ? 'text-yellow-700' : 'text-green-700'
+                  }`}>{statusMessage.text}</Text>
               </View>
             )}
           </View>
@@ -231,8 +212,8 @@ export default function TicketScreen() {
           </View>
 
           {isWorking && (
-            <TouchableOpacity 
-              onPress={openIncidentModal} 
+            <TouchableOpacity
+              onPress={openIncidentModal}
               className="h-14 rounded-2xl flex-row items-center justify-center border border-red-200 bg-red-50 active:bg-red-100"
             >
               <IconSymbol name="exclamationmark.triangle.fill" size={20} color="#DC2626" />
@@ -248,12 +229,12 @@ export default function TicketScreen() {
           onRequestClose={() => setShowIncidentModal(false)}
         >
           <GestureHandlerRootView style={{ flex: 1 }}>
-            <KeyboardAvoidingView 
+            <KeyboardAvoidingView
               behavior={Platform.OS === "ios" ? "padding" : undefined}
               className="flex-1 justify-end bg-fiber-blue/80"
             >
               <View className="bg-white rounded-t-[40px] h-[92%] shadow-2xl overflow-hidden">
-                
+
                 {/* Header */}
                 <View className="px-8 pt-6 pb-4 border-b border-gray-100 bg-white z-10 flex-row justify-between items-center">
                   <View>
@@ -262,20 +243,20 @@ export default function TicketScreen() {
                       Ticket #{ticketNumber || '---'}
                     </Text>
                   </View>
-                  <TouchableOpacity 
-                    onPress={() => setShowIncidentModal(false)} 
+                  <TouchableOpacity
+                    onPress={() => setShowIncidentModal(false)}
                     className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center"
                   >
                     <IconSymbol name="close" size={24} color="#64748B" />
                   </TouchableOpacity>
                 </View>
 
-                <ScrollView 
-                  className="flex-1 px-8" 
+                <ScrollView
+                  className="flex-1 px-8"
                   contentContainerStyle={{ paddingBottom: 120, paddingTop: 20 }}
                   showsVerticalScrollIndicator={false}
                 >
-                  
+
                   {/* 1. ETIQUETAS RÁPIDAS (Chips) */}
                   <Text className="text-fiber-blue font-black text-sm uppercase mb-3">1. Motivo Principal</Text>
                   <View className="flex-row flex-wrap gap-2 mb-8">
@@ -283,24 +264,22 @@ export default function TicketScreen() {
                       <TouchableOpacity
                         key={reason}
                         onPress={() => setIncidentReason(reason === incidentReason ? '' : reason)}
-                        className={`px-4 py-3 rounded-xl border ${
-                          incidentReason === reason 
-                            ? 'bg-red-500 border-red-500 shadow-md' 
+                        className={`px-4 py-3 rounded-xl border ${incidentReason === reason
+                            ? 'bg-red-500 border-red-500 shadow-md'
                             : 'bg-white border-gray-200'
-                        }`}
+                          }`}
                       >
-                        <Text className={`font-bold text-xs uppercase ${
-                          incidentReason === reason ? 'text-white' : 'text-gray-500'
-                        }`}>
+                        <Text className={`font-bold text-xs uppercase ${incidentReason === reason ? 'text-white' : 'text-gray-500'
+                          }`}>
                           {reason}
                         </Text>
                       </TouchableOpacity>
                     ))}
                   </View>
 
-                  {/* 2. DESCRIPCIÓN GIGANTE (Mayor importancia visual) */}
+                  {/* 2. DESCRIPCIÓN (Mayor importancia visual) */}
                   <Text className="text-fiber-blue font-black text-sm uppercase mb-3">2. Descripción Detallada</Text>
-                  <TextInput 
+                  <TextInput
                     className="bg-gray-50 rounded-3xl p-6 text-fiber-dark h-56 mb-8 font-medium align-top border-2 border-gray-100 text-xl shadow-inner"
                     placeholder="Escribe aquí los detalles del problema..."
                     placeholderTextColor="#94A3B8"
@@ -310,14 +289,13 @@ export default function TicketScreen() {
                     autoFocus={false}
                   />
 
-                  {/* 3. EVIDENCIA VISUAL (Al final) */}
+                  {/* 3. EVIDENCIA VISUAL (No implementación real - Solo visual)*/}
                   <Text className="text-fiber-blue font-black text-sm uppercase mb-3">3. Evidencia Visual</Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={toggleAttachment}
                     activeOpacity={0.8}
-                    className={`border-2 border-dashed rounded-3xl h-32 items-center justify-center mb-8 ${
-                      attachedImage ? 'border-green-500 bg-green-50' : 'border-gray-300 bg-white'
-                    }`}
+                    className={`border-2 border-dashed rounded-3xl h-32 items-center justify-center mb-8 ${attachedImage ? 'border-green-500 bg-green-50' : 'border-gray-300 bg-white'
+                      }`}
                   >
                     {attachedImage ? (
                       <View className="items-center">
@@ -340,16 +318,14 @@ export default function TicketScreen() {
 
                 {/* Footer Fijo */}
                 <View className="absolute bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100">
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={submitIncident}
-                    className={`h-20 rounded-[25px] flex-row items-center justify-center border-b-8 ${
-                      (incidentReason || incidentNote) ? 'bg-red-600 border-red-800' : 'bg-gray-200 border-gray-300'
-                    }`}
+                    className={`h-20 rounded-[25px] flex-row items-center justify-center border-b-8 ${(incidentReason || incidentNote) ? 'bg-red-600 border-red-800' : 'bg-gray-200 border-gray-300'
+                      }`}
                     disabled={!incidentReason && !incidentNote}
                   >
-                    <Text className={`font-black text-xl uppercase tracking-tighter ${
-                      (incidentReason || incidentNote) ? 'text-white' : 'text-gray-400'
-                    }`}>
+                    <Text className={`font-black text-xl uppercase tracking-tighter ${(incidentReason || incidentNote) ? 'text-white' : 'text-gray-400'
+                      }`}>
                       Registrar Incidencia
                     </Text>
                   </TouchableOpacity>
