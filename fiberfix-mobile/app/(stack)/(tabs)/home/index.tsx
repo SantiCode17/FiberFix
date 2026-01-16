@@ -2,6 +2,7 @@ import { LocationInfo } from '@/components/LocationInfo';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useLocation } from '@/hooks/useLocation';
 import React, { useEffect, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -15,8 +16,15 @@ import {
 import TcpSocket from 'react-native-tcp-socket';
 
 export default function TicketScreen() {
+  //const { userId } = useLocalSearchParams(); CUANDO ACABEMOS LAS PRUEBAS DEJAREMOS ESTA LINEA
+
+  // Mientras hacemos pruebas entramos directamente a home. Ponemos un usuario por defecto mientras tanto
+  const { userId: userIdParam } = useLocalSearchParams();
+  const userId = userIdParam || 'TEC001';
+
   const isConnected = true;
   const [ticketNumber, setTicketNumber] = useState('');
+  const [description, setDescription] = useState('');
   const [isWorking, setIsWorking] = useState(false);
   
   // Estado para Feedback Visual
@@ -35,15 +43,8 @@ export default function TicketScreen() {
     }
   }, [statusMessage]);
 
+  // Crea o accede al ticket
   const handleStart = () => {
-    if (ticketNumber.trim()) {
-      setIsWorking(true);
-      setStatusMessage(null);
-      Keyboard.dismiss();
-    }
-  };
-
-  const handleFinish = () => {
     const parte = buildWorkReport();
     if (!parte) {
       setStatusMessage({ text: "ERROR: SIN SEÑAL GPS", type: 'error' });
@@ -51,6 +52,28 @@ export default function TicketScreen() {
     }
     sendBySocket(parte);
   };
+
+
+  // Finaliza el ticket
+  const handleFinish = () => {
+    if (!location) {
+      setStatusMessage({ text: "ERROR: SIN SEÑAL GPS", type: 'error' });
+      return null;
+    }
+    return `${userId}|${ticketNumber}|${new Date().toISOString()}|FINALIZADO`;
+  };
+
+  const handleInterrupted = () => {
+    if (!location) {
+      setStatusMessage({ text: "ERROR: SIN SEÑAL GPS", type: 'error' });
+      return null;
+    }
+    if (!description.trim()) {
+      setStatusMessage({ text: "Debe rellenar el por qué se interrumpe el ticket.", type: 'error' });
+      return null;
+    }
+    return `${userId}|${ticketNumber}|${description}|${new Date().toISOString()}|INTERRUMPIDO}`;
+  }
 
   const sendBySocket = (message: string) => {
     const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP;
@@ -82,7 +105,7 @@ export default function TicketScreen() {
 
   const buildWorkReport = () => {
     if (!location) return null;
-    return `TEC001|${ticketNumber}|${location.coords.latitude}|${location.coords.longitude}|${new Date().toISOString()}`;
+    return `${userId}|${ticketNumber}|${location.coords.latitude}|${location.coords.longitude}|${new Date().toISOString()}`;
   }
 
   return (
@@ -139,7 +162,6 @@ export default function TicketScreen() {
                 Nº Ticket Trabajo
               </Text>
               
-              {/* INPUT CORREGIDO: padding 0 y textAlign center para evitar desplazamiento */}
               <TextInput
                 className={`text-7xl font-black ${isWorking ? 'text-fiber-blue' : 'text-fiber-orange'}`}
                 style={{ textAlign: 'center', padding: 0, margin: 0 }}
@@ -165,7 +187,7 @@ export default function TicketScreen() {
             </View>
           </View>
 
-          {/* Zona de Notificación (Respetando el espacio visual) */}
+          {/* Zona de Notificación */}
           <View className="h-20 justify-center items-center mt-4">
             {statusMessage && (
               <View className={`flex-row items-center px-6 py-3 rounded-2xl ${
