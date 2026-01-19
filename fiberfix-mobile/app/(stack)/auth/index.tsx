@@ -17,7 +17,6 @@ export default function LoginScreen() {
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Estado para Feedback Visual
   const [statusMessage, setStatusMessage] = useState<{
@@ -25,16 +24,8 @@ export default function LoginScreen() {
     type: 'success' | 'error';
   } | null>(null);
 
-  const handleLogin = () => {
-    setErrorMessage(null);
-
-    // Validación visual (Simulación)
-    if (!userId.trim() || !password.trim()) {
-      setErrorMessage("Introduce ID y Contraseña para continuar.");
-      return;
-    }
-
-    const sendLoginBySocket = (
+  const sendLoginBySocket = (
+    tipo: string,
     user: string,
     pass: string,
     onSuccess: () => void,
@@ -74,15 +65,18 @@ export default function LoginScreen() {
     }
 
     sendLoginBySocket(
+      'LOGIN',
       userId,
       password,
       () => {
         setStatusMessage({ text: 'Login correcto', type: 'success' });
-        router.replace({ pathname: '../home', params: { userId } });
+        setTimeout(() => {
+          router.replace({ pathname: '../home', params: { userId } });
+        }, 1000); // Esperar 1 segundo antes de redirigir
       }, () => {
         setStatusMessage({ text: 'Credenciales incorrectas.', type: 'error' });
       }
-    )
+    );
   };
 
   return (
@@ -120,7 +114,7 @@ export default function LoginScreen() {
                     <IconSymbol name="house.fill" size={24} color="#64748B" />
                     <TextInput
                       className="flex-1 ml-4 text-xl font-bold text-fiber-dark"
-                      placeholder="Ej: TEC-001"
+                      placeholder="Ej: TEC001"
                       placeholderTextColor="#CBD5E1"
                       value={userId}
                       onChangeText={setUserId}
@@ -148,11 +142,11 @@ export default function LoginScreen() {
                   </View>
                 </View>
 
-                {/* Feedback Error Visual */}
-                {errorMessage && (
-                  <View className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-xl flex-row items-center">
-                    <IconSymbol name="exclamationmark.triangle.fill" size={20} color="#DC2626" />
-                    <Text className="text-red-600 font-bold ml-3 text-xs flex-1">{errorMessage}</Text>
+                {/* Feedback Visual */}
+                {statusMessage && (
+                  <View className={`p-4 mb-6 rounded-r-xl flex-row items-center ${statusMessage.type === 'error' ? 'bg-red-50 border-l-4 border-red-500' : 'bg-green-50 border-l-4 border-green-500'}`}>
+                    <IconSymbol name={statusMessage.type === 'error' ? 'exclamationmark.triangle.fill' : 'checkmark.circle.fill'} size={20} color={statusMessage.type === 'error' ? '#DC2626' : '#16A34A'} />
+                    <Text className={`${statusMessage.type === 'error' ? 'text-red-600' : 'text-green-600'} font-bold ml-3 text-xs flex-1`}>{statusMessage.text}</Text>
                   </View>
                 )}
 
@@ -176,5 +170,4 @@ export default function LoginScreen() {
       </View>
     </TouchableWithoutFeedback>
   );
-}
 }

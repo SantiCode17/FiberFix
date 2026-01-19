@@ -1,8 +1,8 @@
 import { LocationInfo } from '@/components/LocationInfo';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useLocation } from '@/hooks/useLocation';
-import React, { useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Keyboard,
@@ -20,11 +20,7 @@ import TcpSocket from 'react-native-tcp-socket';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function TicketScreen() {
-  //const { userId } = useLocalSearchParams(); CUANDO ACABEMOS LAS PRUEBAS DEJAREMOS ESTA LINEA
-  // Mientras hacemos pruebas entramos directamente a home. Ponemos un usuario por defecto mientras tanto
-  const { userId: userIdParam } = useLocalSearchParams();
-  const userId = userIdParam || 'TEC001';
-
+  const { userId } = useLocalSearchParams();
   const [ticketNumber, setTicketNumber] = useState('');
   const [isWorking, setIsWorking] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' | 'warning' } | null>(null);
@@ -48,16 +44,16 @@ export default function TicketScreen() {
     }
   }, [statusMessage]);
 
-  
+
   // Crea o accede al ticket
   const handleStart = () => {
     if (!location) {
       setStatusMessage({ text: "ERROR: SIN SEÑAL GPS", type: 'error' });
       return;
     }
-    
-    const parte = `${userId}|${ticketNumber}|${location.coords.latitude}|${location.coords.longitude}|${new Date().toISOString()}|PENDIENTE`;
-    
+
+    const parte = `START|${userId}|${ticketNumber}|${location.coords.latitude}|${location.coords.longitude}|${new Date().toISOString()}`;
+
     sendBySocket(parte);
   };
 
@@ -67,8 +63,8 @@ export default function TicketScreen() {
       setStatusMessage({ text: "ERROR: SIN SEÑAL GPS", type: 'error' });
       return null;
     }
-    const parte = `${userId}|${ticketNumber}|${new Date().toISOString()}|FINALIZADO`;
-    
+    const parte = `FINISH|${userId}|${ticketNumber}|${new Date().toISOString()}`;
+
     sendBySocket(parte);
   };
 
@@ -85,7 +81,8 @@ export default function TicketScreen() {
   };
 
   const submitIncident = () => {
-    if (!incidentReason && !incidentNote.trim()) {
+    //if (!incidentReason && !incidentNote.trim()) {
+    if (!incidentNote.trim()) {
       Alert.alert("Faltan datos", "Selecciona un motivo o escribe una descripción.");
       return;
     }
@@ -95,8 +92,9 @@ export default function TicketScreen() {
     setIsWorking(false);
     setTicketNumber('');
 
-    const parte = `${userId}|${ticketNumber}|${incidentReason}||${incidentNote}|${new Date().toISOString()}|INTERRUMPIDO}`;
-    
+    //const parte = `INCIDENT|${userId}|${ticketNumber}|${incidentReason}|${incidentNote}|${new Date().toISOString()}}`;
+    const parte = `INCIDENT|${userId}|${ticketNumber}|Falta Material|${incidentNote}|${new Date().toISOString()}}`;
+
     sendBySocket(parte);
   };
 
@@ -110,14 +108,48 @@ export default function TicketScreen() {
       const cliente = TcpSocket.createConnection({ host: SERVER_IP, port: SERVER_PORT }, () => {
         cliente.write(message + '\n');
       });
-      cliente.on('data', () => {
-        setStatusMessage({ text: "TRABAJO FINALIZADO", type: 'success' });
-        setIsWorking(false);
-        setTicketNumber('');
+
+      cliente.on('data', (data) => {
+        const response = data.toString().trim();
+
+        if (response.startsWith('START_OK_EXISTENTE')) {
+          setStatusMessage({ text: 'Ticket reanudado', type: 'success' });
+          setIsWorking(true);
+        } else if (response.startsWith('START_OK')) {
+          setStatusMessage({ text: 'Ticket creado', type: 'success' });
+          setIsWorking(true);
+        } else if (response.startsWith('START_ERROR_FINALIZADO')) {
+          setStatusMessage({ text: 'Ticket ya finalizado', type: 'warning' });
+        } else if (response.startsWith('FINISH_OK')) {
+          setStatusMessage({ text: 'Trabajo finalizado', type: 'success' });
+          setIsWorking(false);
+          setTicketNumber(''); // Borrar el ticket al finalizar
+        } else {
+          setStatusMessage({ text: 'Respuesta desconocida del servidor', type: 'warning' });
+        }
+
         cliente.end();
       });
-      cliente.on('error', () => { setStatusMessage({ text: "ERROR DE ENVÍO", type: 'error' }); });
-    } catch (error) { setStatusMessage({ text: "ERROR DE CONEXIÓN", type: 'error' }); }
+
+      cliente.on('error', () => {
+        setStatusMessage({ text: 'Error de envío', type: 'error' });
+      });
+    } catch (error) {
+      setStatusMessage({ text: 'Error de conexión', type: 'error' });
+    }
+  };
+
+  // Mostrar el botón de incidencia cuando el trabajo está en curso
+  const renderIncidentButton = () => {
+    if (isWorking) {
+      return (
+        <TouchableOpacity onPress={openIncidentModal} className="flex-1 h-20 rounded-[25px] flex-row items-center justify-center bg-red-500 border-b-4 border-red-700">
+          <IconSymbol name="exclamationmark.triangle.fill" size={24} color="white" />
+          <Text className="text-white font-black text-lg ml-2">Incidencia</Text>
+        </TouchableOpacity>
+      );
+    }
+    return null;
   };
 
   return (
@@ -257,7 +289,8 @@ export default function TicketScreen() {
                   showsVerticalScrollIndicator={false}
                 >
 
-                  {/* 1. ETIQUETAS RÁPIDAS (Chips) */}
+                  {/* Revisar con Santi */}
+                  {/* 1. ETIQUETAS RÁPIDAS (Chips) 
                   <Text className="text-fiber-blue font-black text-sm uppercase mb-3">1. Motivo Principal</Text>
                   <View className="flex-row flex-wrap gap-2 mb-8">
                     {QUICK_REASONS.map((reason) => (
@@ -275,7 +308,7 @@ export default function TicketScreen() {
                         </Text>
                       </TouchableOpacity>
                     ))}
-                  </View>
+                  </View>*/}
 
                   {/* 2. DESCRIPCIÓN (Mayor importancia visual) */}
                   <Text className="text-fiber-blue font-black text-sm uppercase mb-3">2. Descripción Detallada</Text>
@@ -330,12 +363,10 @@ export default function TicketScreen() {
                     </Text>
                   </TouchableOpacity>
                 </View>
-
               </View>
             </KeyboardAvoidingView>
           </GestureHandlerRootView>
         </Modal>
-
       </View>
     </TouchableWithoutFeedback>
   );
