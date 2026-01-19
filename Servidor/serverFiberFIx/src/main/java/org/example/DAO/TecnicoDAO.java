@@ -23,7 +23,7 @@ public class TecnicoDAO {
             return rs.next();
 
         } catch (SQLException e) {
-            Log.escribirLog(e.getMessage());
+            Log.escribirLog("Error Login: " +e.getMessage());
             return false;
         }
     }

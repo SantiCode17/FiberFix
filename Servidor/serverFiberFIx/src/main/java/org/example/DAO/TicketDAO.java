@@ -1,55 +1,157 @@
 package org.example.DAO;
 
-import org.example.DTO.Estado;
-import org.example.DTO.Ticket;
 import org.example.Server.Log;
 
 import java.sql.*;
 import java.time.LocalDateTime;
 
 public class TicketDAO {
-    public static boolean comprobarTicket(int id){
-        try{
-            Statement statement = ConexionBD.getConnection().createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT * FROM Ticket WHERE id = "+id+";");
+    // Sacar el idTecnico para las consultas
+    private static int obtenerIdTecnico(String usuario) throws SQLException {
+        String sql = "SELECT id FROM Tecnico WHERE usuario = ?";
 
+        Connection con = ConexionBD.getConnection();
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setString(1, usuario);
 
-            return (resultSet.next());
+        ResultSet rs = ps.executeQuery();
 
-        } catch (SQLException e) {
-            Log.escribirLog("Error al comprobar ticket: "+e);
-            throw new RuntimeException(e);
+        if (rs.next()) {
+            return rs.getInt("id");
+        } else {
+            throw new SQLException("Técnico no encontrado");
         }
     }
 
-    public static boolean crearTicket(Ticket ticket){
+    // Comprobar si el Ticket ya existe
+    private static boolean existeTicket(int numeroTicket, int idTecnico) throws SQLException {
+        String sql = """
+            SELECT * FROM Ticket
+            WHERE numero_ticket = ? AND id_tecnico = ?
+        """;
+
+        Connection con = ConexionBD.getConnection();
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setInt(1, numeroTicket);
+        ps.setInt(2, idTecnico);
+
+        ResultSet rs = ps.executeQuery();
+        return rs.next();
+    }
+
+    private static String obtenerEstadoTicket(int numeroTicket, int idTecnico) throws SQLException {
+        String sql = "SELECT estado FROM Ticket WHERE numero_ticket = ? AND id_tecnico = ?";
+
+        Connection con = ConexionBD.getConnection();
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setInt(1, numeroTicket);
+        ps.setInt(2, idTecnico);
+
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            return rs.getString("estado");
+        }
+        return null;
+    }
+
+    // Crear un Ticket
+    public static int iniciarTicket(
+            String usuario,
+            int numeroTicket,
+            LocalDateTime fechaInicio,
+            double lat,
+            double lon
+    ) {
         try{
-            if (comprobarTicket(ticket.getId())){
-                return false;
+            int idTecnico = obtenerIdTecnico(usuario); // Sacamos su id
+
+            if (existeTicket(numeroTicket, idTecnico)){
+                String estado = obtenerEstadoTicket(numeroTicket, idTecnico);
+                if ("Terminado".equalsIgnoreCase(estado)){
+                    return 2; // Codigo para ticket ya finalizado
+                }
+                return 0; // El ticket ya existe
             }
 
+            // Crear el ticket
+            String sql = """
+                INSERT INTO Ticket (numero_ticket, estado, fecha_inicio, id_tecnico)
+                VALUES (?, 'Pendiente', ?, ?)
+            """;
 
-            PreparedStatement statement = ConexionBD.getConnection().prepareStatement("INSERT INTO Ticket (id,estado,descripcion,fecha_creacion,fecha_inicio,id_tecnico,dni_cliente) VALUES (?,?,?,?,?,?,?)");
-            statement.setInt(1,ticket.getId());
-            statement.setString(2,ticket.getEstado().toString());
-            statement.setString(3,ticket.getDescripcion());
-            statement.setTimestamp(4, Timestamp.valueOf(ticket.getFechaCreacion()));
-            statement.setTimestamp(5, Timestamp.valueOf(ticket.getFechaInicio()));
-            statement.setInt(6, ticket.getId_tecnico());
-            statement.setString(7, ticket.getDni());
+            Connection con = ConexionBD.getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, numeroTicket);
+            ps.setTimestamp(2, Timestamp.valueOf(fechaInicio));
+            ps.setInt(3, idTecnico);
 
-            int insert = statement.executeUpdate();
+            ps.executeUpdate();
 
-            if (insert==1){
-                return true;
-            } else {
-                return false;
-            }
+            // Guardar Posicion
+            PosicionDAO.guardarPosicion(idTecnico, numeroTicket, lat, lon);
+            return 1;
+        }catch (SQLException e){
+            Log.escribirLog("Error iniciar ticket: " + e.getMessage());
+            return -1;
+        }
+    }
 
+    // Finalizar un Ticket
+    public static boolean finalizarTicket(
+            String usuario,
+            int numeroTicket,
+            LocalDateTime fechaFin
+    ) {
+        try {
+            int idTecnico = obtenerIdTecnico(usuario);
 
-        } catch (SQLException e) {
-            Log.escribirLog("Error al crear el ticket "+e);
-            throw new RuntimeException(e);
+            String sql = """
+                UPDATE Ticket SET estado = 'Terminado', fecha_cierre = ?
+                WHERE numero_ticket = ? AND id_tecnico = ?
+            """;
+
+            Connection con = ConexionBD.getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setTimestamp(1, Timestamp.valueOf(fechaFin));
+            ps.setInt(2, numeroTicket);
+            ps.setInt(3, idTecnico);
+
+            return ps.executeUpdate() == 1;
+
+        } catch (Exception e) {
+            Log.escribirLog("Error finalizar ticket: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Registrar una incidencia en un Ticket
+    public static boolean registrarIncidencia(
+            String usuario,
+            int numeroTicket,
+            String motivo,
+            String descripcion
+    ) {
+        try {
+            int idTecnico = obtenerIdTecnico(usuario);
+
+            String sql = """
+                UPDATE Ticket SET estado = 'Cancelado', motivo = ?, descripcion = ?
+                WHERE numero_ticket = ?
+                  AND id_tecnico = ?
+            """;
+
+            Connection con = ConexionBD.getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, motivo);
+            ps.setString(2, descripcion);
+            ps.setInt(3, numeroTicket);
+            ps.setInt(4, idTecnico);
+
+            return ps.executeUpdate() == 1;
+
+        } catch (Exception e) {
+            Log.escribirLog("Error incidencia: " + e.getMessage());
+            return false;
         }
     }
 }
