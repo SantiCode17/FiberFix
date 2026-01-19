@@ -5,7 +5,7 @@
 cd mysql-rds
 
 # Levantar contenedor en segundo plano
-docker-compose up -d
+sudo docker compose up -d
 
 # Esperar 5 segundos para que MySQL arranque
 echo "Esperando a que MySQL inicie..."
@@ -13,10 +13,10 @@ sleep 3
 
 # Cargar schema
 echo "Cargando schema..."
-docker exec -i add-dbms mysql -u root -pdbrootpass < ../data/database.sql
+sudo docker exec -i add-dbms mysql -u root -pdbrootpass < ../data/database.sql
 
 # Cargar datos
 echo "Cargando inserts..."
-docker exec -i add-dbms mysql -u root -pdbrootpass < ../data/inserts.sql
+sudo docker exec -i add-dbms mysql -u root -pdbrootpass < ../data/inserts.sql
 
 echo "Base de datos lista."

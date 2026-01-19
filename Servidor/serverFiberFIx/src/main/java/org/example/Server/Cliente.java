@@ -2,14 +2,17 @@ package org.example.Server;
 
 import org.example.DAO.PosicionDAO;
 import org.example.DAO.TecnicoDAO;
+import org.example.DAO.TicketDAO;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
-public class Cliente implements Runnable{
+public class Cliente implements Runnable {
 
     Socket socket;
 
@@ -26,70 +29,105 @@ public class Cliente implements Runnable{
                         socket.getOutputStream(), true)
         ) {
             String mensaje = entrada.readLine();
+            if (mensaje == null) return;
+
             System.out.println("Cliente dice: " + mensaje);
 
-            if (mensaje != null && mensaje.startsWith("LOGIN|")) {
-                String[] partes = mensaje.split("\\|");
-                String usuario = partes[1];
-                String pass = partes[2];
+            String[] partes = mensaje.split("\\|");
+            String accion = partes[0];
 
-                boolean valido = TecnicoDAO.loginCorrecto(usuario, pass);
-
-                if (valido) {
-                    System.out.println("LOGIN_OK");
-                    salida.println("LOGIN_OK");
-                } else {
-                    System.out.println("LOGIN_ERROR");
-                    salida.println("LOGIN_ERROR");
-                }
-            } else {
-                salida.println("ERROR_FORMATO");
+            switch (accion) {
+                case "LOGIN":
+                    manejarLogin(partes, salida);
+                    break;
+                case "START":
+                    manejarStart(partes, salida);
+                    break;
+                case "FINISH":
+                    manejarFinish(partes, salida);
+                    break;
+                case "INCIDENT":
+                    manejarIncident(partes, salida);
+                    break;
+                default:
+                    salida.println("ERROR_UNKNOWN_ACTION");
             }
-
         } catch (Exception e) {
             Log.escribirLog(e.getMessage());
         } finally {
             try {
                 socket.close();
-                System.out.println("Cliente desconectado");
             } catch (IOException e) {
                 Log.escribirLog(e.getMessage());
             }
         }
     }
 
-    public void procesarLogin(String mensaje, PrintWriter salida) {
-        try {
-            String[] partes = mensaje.split("\\|");
-            String usuario = partes[1];
-            String pass = partes[2];
+    public void manejarLogin(String[] partes, PrintWriter salida) {
+        if (partes.length != 3) {
+            salida.println("LOGIN_ERROR");
+            return;
+        }
 
-            if (TecnicoDAO.loginCorrecto(usuario, pass)){
-                salida.println("LOGIN_OK");
-            }else{
-                salida.println("LOGIN_FAIL");
+        boolean ok = TecnicoDAO.loginCorrecto(partes[1], partes[2]);
+        salida.println(ok ? "LOGIN_OK" : "LOGIN_ERROR");
+        System.out.println(ok ? "LOGIN_OK" : "LOGIN_ERROR");
+    }
+
+    public void manejarStart (String[] partes, PrintWriter salida) {
+        try{
+            String usuario = partes[1];
+            int numTicket = Integer.parseInt(partes[2]);
+            double lat = Double.parseDouble(partes[3]);
+            double lon = Double.parseDouble(partes[4]);
+            LocalDateTime fecha = LocalDateTime.parse(partes[5], DateTimeFormatter.ISO_DATE_TIME);
+
+            int ok = TicketDAO.iniciarTicket(usuario, numTicket, fecha, lat, lon);
+            String respuesta;
+            if (ok == 1) {
+                respuesta = "START_OK";
+            } else if (ok == 0) {
+                respuesta = "START_OK_EXISTENTE";
+            } else if (ok == 2) {
+                respuesta = "START_ERROR_FINALIZADO";
+            } else {
+                respuesta = "START_ERROR";
             }
+
+            salida.println(respuesta);
+            System.out.println(respuesta);
         }catch (Exception e){
-            Log.escribirLog(e.getMessage());
-            salida.println("LOGIN_FAIL");
+            salida.println("START_ERROR");
         }
     }
 
-    public void procesarParteTrabajo(String mensaje, PrintWriter salida) {
+    public void manejarFinish(String[] partes, PrintWriter salida) {
         try{
-            String[] partes = mensaje.split("\\|");
+            String usuario = partes[1];
+            int numTicket = Integer.parseInt(partes[2]);
+            LocalDateTime fecha = LocalDateTime.parse(partes[3], DateTimeFormatter.ISO_DATE_TIME);
 
-            String tecnico = partes[0];
-            int ticket = Integer.parseInt(partes[1]);
-            double lat = Double.parseDouble(partes[2]);
-            double lon = Double.parseDouble(partes[3]);
+            boolean ok = TicketDAO.finalizarTicket(usuario, numTicket, fecha);
+            salida.println(ok ? "FINISH_OK" : "FINISH_ERROR");
+            System.out.println(ok ? "FINISH_OK" : "FINISH_ERROR");
 
-            PosicionDAO.guardarPosicion(tecnico,ticket,lat,lon);
-
-            salida.println("OK");
         }catch (Exception e){
-            Log.escribirLog(e.getMessage());
-            salida.println("ERROR");
+            salida.println("FINISH_ERROR");
+        }
+    }
+
+    public void manejarIncident(String[] partes, PrintWriter salida) {
+        try{
+            String usuario = partes[1];
+            int numTicket = Integer.parseInt(partes[2]);
+            String motivo = partes[3];
+            String nota = partes[4];
+
+            boolean ok = TicketDAO.registrarIncidencia(usuario, numTicket, motivo, nota);
+            salida.println(ok ? "INCIDENT_OK" : "INCIDENT_ERROR");
+            System.out.println(ok ? "INCIDENT_OK" : "INCIDENT_ERROR");
+        }catch (Exception e){
+            salida.println("INCIDENT_ERROR");
         }
     }
 }
