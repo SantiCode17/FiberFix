@@ -81,6 +81,7 @@ export default function TicketScreen() {
   };
 
   const submitIncident = () => {
+    // IMPLEMENTAR CHIPS PROXIMAMENTE - Por el momento se usa un motivo por defecto
     //if (!incidentReason && !incidentNote.trim()) {
     if (!incidentNote.trim()) {
       Alert.alert("Faltan datos", "Selecciona un motivo o escribe una descripción.");
