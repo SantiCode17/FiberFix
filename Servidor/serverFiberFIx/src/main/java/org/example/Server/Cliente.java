@@ -49,6 +49,9 @@ public class Cliente implements Runnable {
                 case "INCIDENT":
                     manejarIncident(partes, salida);
                     break;
+                case "HISTORY":
+                    manejarHistory(partes, salida);
+                    break;
                 default:
                     salida.println("ERROR_UNKNOWN_ACTION");
             }
@@ -129,5 +132,17 @@ public class Cliente implements Runnable {
         }catch (Exception e){
             salida.println("INCIDENT_ERROR");
         }
+    }
+
+    public void manejarHistory(String[] partes, PrintWriter salida){
+        if (partes.length != 2) {
+            salida.println("HISTORY_ERROR");
+            return;
+        }
+
+        String usuario = partes[1];
+
+        String json = TicketDAO.obtenerHistorial(usuario);
+        salida.println(json);
     }
 }
