@@ -1,5 +1,5 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useLocalSearchParams } from 'expo-router';
+import { useUser } from '@/context/UserContext';
 import React, { useEffect, useState } from 'react';
 import { Alert, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import TcpSocket from 'react-native-tcp-socket';
@@ -20,8 +20,8 @@ type Ticket = {
 };
 
 export default function ExploreScreen() {
+  const { userId } = useUser();
   const [historyData, setHistoryData] = useState<Ticket[]>([]);
-  const { userId } = useLocalSearchParams();
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 
   const loadHistory = () => {
@@ -29,7 +29,12 @@ export default function ExploreScreen() {
     const SERVER_PORT = Number(process.env.EXPO_PUBLIC_SERVER_PORT);
 
     const cliente = TcpSocket.createConnection({ host: SERVER_IP, port: SERVER_PORT }, () => {
-      cliente.write(`HISTORY|TEC001\n`); //CAMBIAR POR USUARIO DE AUTH
+      if (userId) {
+        cliente.write(`HISTORY|${userId}\n`); // Enviar el ID dinámico del usuario autenticado
+      } else {
+        Alert.alert('Error', 'No se pudo obtener el ID del usuario.');
+        cliente.end();
+      }
     });
 
     cliente.on('data', (data) => {

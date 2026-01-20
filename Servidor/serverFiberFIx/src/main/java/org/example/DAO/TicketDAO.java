@@ -162,7 +162,8 @@ public class TicketDAO {
 
         String sql = """
                 SELECT t.id, t.numero_ticket, t.estado, t.motivo, t.descripcion, t.fecha_creacion, t.fecha_inicio, t.fecha_cierre
-                FROM Ticket t JOIN Tecnico te ON t.id_tecnico = te.id
+                FROM Ticket t
+                JOIN Tecnico te ON t.id_tecnico = te.id
                 WHERE te.usuario = ?
                 ORDER BY t.fecha_creacion DESC
                 """;
