@@ -12,10 +12,9 @@ public class Ticket {
     private int id_tecnico;
     private String dni;
 
-    public Ticket(Estado estado, String descripcion, int id, LocalDateTime fechaCreacion, LocalDateTime fechaInicio, LocalDateTime fechaCierre, String dni, int id_tecnico) {
+    public Ticket(Estado estado, String descripcion, LocalDateTime fechaCreacion, LocalDateTime fechaInicio, LocalDateTime fechaCierre, String dni, int id_tecnico) {
         this.estado = estado;
         this.descripcion = descripcion;
-        this.id = id;
         this.fechaCreacion = fechaCreacion;
         this.fechaInicio = fechaInicio;
         this.fechaCierre = fechaCierre;
@@ -53,6 +52,16 @@ public class Ticket {
         this.dni = dni;
         this.estado = Estado.PENDIENTE;
         this.fechaCreacion = LocalDateTime.now();
+    }
+
+    public Ticket(int id, Estado estado, String descripcion, LocalDateTime fechaCreacion, LocalDateTime fechaInicio, int id_tecnico, String dni) {
+        this.id = id;
+        this.estado = estado;
+        this.descripcion = descripcion;
+        this.fechaCreacion = fechaCreacion;
+        this.fechaInicio = fechaInicio;
+        this.id_tecnico = id_tecnico;
+        this.dni = dni;
     }
 
     public int getId() {

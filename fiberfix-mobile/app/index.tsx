@@ -1,8 +1,8 @@
-import { Redirect } from 'expo-router'
-import React from 'react'
+import { Redirect } from 'expo-router';
+import React from 'react';
 
 const App = () => {
-    return <Redirect href="./auth" /> // CAMBIAR A AUTH CUANDO TERMINEN LAS PRUEBAS
-}
+    return <Redirect href="./auth" />;
+};
 
-export default App
+export default App;
