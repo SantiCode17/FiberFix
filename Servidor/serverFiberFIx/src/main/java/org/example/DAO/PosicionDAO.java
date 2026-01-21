@@ -9,11 +9,12 @@ import java.sql.SQLException;
 public class PosicionDAO {
 
     public static void guardarPosicion(
-            String usuario,
+            int idTecnico,
             int ticket,
             double lat,
             double lon
     ) {
+
         String sql = """
             INSERT INTO Posicion_Tecnico (latitud, longitud, id_tecnico, id_ticket)
             SELECT ?, ?, id, ?
@@ -27,8 +28,8 @@ public class PosicionDAO {
         ) {
             ps.setDouble(1, lat);
             ps.setDouble(2, lon);
-            ps.setInt(3, ticket);
-            ps.setString(4, usuario);
+            ps.setInt(3, idTecnico);
+            ps.setInt(4, ticket);
 
             ps.executeUpdate();
 
