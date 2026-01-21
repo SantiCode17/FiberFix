@@ -1,18 +1,14 @@
 CREATE schema FiberFix;
 USE FiberFix;
 
-
-
 CREATE TABLE Tecnico
 (
     id          INT PRIMARY KEY AUTO_INCREMENT,
-    /*La cerda de la carla queria contraseñas unicas , el unique hace eso mismo*/
     usuario     VARCHAR(50)  NOT NULL UNIQUE,
     contrasenya VARCHAR(100) NOT NULL,
     nombre      VARCHAR(50)  NOT NULL,
     apellido    VARCHAR(50)  NOT NULL
 );
-
 
 CREATE TABLE Cliente
 (
@@ -20,57 +16,44 @@ CREATE TABLE Cliente
     nombre                VARCHAR(50)  NOT NULL,
     apellido              VARCHAR(50)  NOT NULL,
     direccion_instalacion VARCHAR(100) NOT NULL,
-
-    /*POngo varchar porque se especidifa el prefijo, el +34 */
     telefono              VARCHAR(15)  NOT NULL
-
-
 );
-
-
 
 CREATE TABLE Ticket
 (
-    id             INT PRIMARY KEY AUTO_INCREMENT,
-
+    id              INT PRIMARY KEY AUTO_INCREMENT,
+    numero_ticket   INT NOT NULL,
     /*Enumeracion de estados, si no hay un estado asignado, por defecto es Pendiente*/
-    estado         ENUM ('Pendiente', 'En Proceso', 'Terminado', 'Cancelado') NOT NULL DEFAULT 'Pendiente',
+    estado          ENUM ('Pendiente', 'En Proceso', 'Terminado', 'Cancelado') NOT NULL DEFAULT 'Pendiente',
+    /*Enumeración de estados de la incidendia*/
+    motivo          ENUM ('Cliente Ausente', 'Instalación Rota', 'Falta Material', 'Sin Acceso', 'Perro Suelto', 'Otros')   NULL DEFAULT 'Falta Material',
+    descripcion     VARCHAR(200)    NULL,
 
-    descripcion    VARCHAR(200)                                               NOT NULL,
-
-    /*Esto pilla la fecha en la que se crea el ticket*/
-    fecha_creacion DATETIME                                                            DEFAULT CURRENT_TIMESTAMP,
-
+    /*Fecha en la que se crea el ticket*/
+    fecha_creacion  DATETIME    DEFAULT CURRENT_TIMESTAMP,
     /*Fecha en la que se inicia el ticket*/
-    fecha_inicio   DATETIME                                                   NULL,
-
+    fecha_inicio    DATETIME    NULL,
     /*Fehca en la que se completa el ticket*/
-    fecha_cierre   DATETIME                                                   NULL,
-
-    id_tecnico     INT,
-    dni_cliente    VARCHAR(9),
+    fecha_cierre    DATETIME    NULL,
+    id_tecnico      INT NOT NULL,
+    dni_cliente     VARCHAR(9),
 
     FOREIGN KEY (id_tecnico) REFERENCES Tecnico (id),
-    FOREIGN KEY (dni_cliente) REFERENCES Cliente (dni)
+    FOREIGN KEY (dni_cliente) REFERENCES Cliente (dni),
+    UNIQUE (numero_ticket, id_tecnico)
 );
-
 
 CREATE TABLE Posicion_Tecnico
 (
     id         INT PRIMARY KEY AUTO_INCREMENT,
-
     /*Las coordenadas*/
     latitud    DECIMAL(9, 6) NOT NULL,
     longitud   DECIMAL(9, 6) NOT NULL,
-
     /*Fecha y hora en la que se recoge la ubicacion*/
     fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
-
     /*Relaciona al tecnico con el ticket*/
-    id_tecnico INT,
-    id_ticket  INT,
+    id_tecnico INT NOT NULL,
+    id_ticket  INT NOT NULL,
     FOREIGN KEY (id_ticket) REFERENCES Ticket (id),
     FOREIGN KEY (id_tecnico) REFERENCES Tecnico (id)
 );
-
-
