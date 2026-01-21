@@ -5,10 +5,12 @@ import java.time.LocalDateTime;
 public class Ticket {
     private int id;
     private Estado estado;
+    private String motivo;
     private String descripcion;
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaInicio;
     private LocalDateTime fechaCierre;
+    private LocalDateTime fechaUltimaEdicion;
     private int id_tecnico;
     private String dni;
 
@@ -122,5 +124,21 @@ public class Ticket {
 
     public void setDni(String dni) {
         this.dni = dni;
+    }
+
+    public String getMotivo() {
+        return motivo;
+    }
+
+    public void setMotivo(String motivo) {
+        this.motivo = motivo;
+    }
+
+    public LocalDateTime getFechaUltimaEdicion() {
+        return fechaUltimaEdicion;
+    }
+
+    public void setFechaUltimaEdicion(LocalDateTime fechaUltimaEdicion) {
+        this.fechaUltimaEdicion = fechaUltimaEdicion;
     }
 }

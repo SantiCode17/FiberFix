@@ -217,4 +217,136 @@ public class TicketDAO {
             return "[]";
         }
     }
+
+    /**
+     * Editar un ticket existente (motivo y descripción)
+     * Solo el técnico propietario del ticket puede editarlo
+     */
+    public static boolean editarTicket(
+            String usuario,
+            int idTicket,
+            String motivo,
+            String descripcion
+    ) {
+        try {
+            int idTecnico = obtenerIdTecnico(usuario);
+
+            String sql = """
+                UPDATE Ticket 
+                SET motivo = ?, descripcion = ?, fecha_ultima_edicion = NOW()
+                WHERE id = ? AND id_tecnico = ?
+            """;
+
+            Connection con = ConexionBD.getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, motivo);
+            ps.setString(2, descripcion);
+            ps.setInt(3, idTicket);
+            ps.setInt(4, idTecnico);
+
+            boolean resultado = ps.executeUpdate() == 1;
+            if (resultado) {
+                Log.escribirLog("Ticket " + idTicket + " editado por técnico " + usuario);
+            }
+            return resultado;
+
+        } catch (Exception e) {
+            Log.escribirLog("Error editando ticket: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Marcar un ticket como borrado (borrado lógico)
+     * Solo se puede borrar tickets que estén en estado Pendiente o Cancelado
+     */
+    public static boolean marcarComoBorrado(
+            String usuario,
+            int idTicket
+    ) {
+        try {
+            int idTecnico = obtenerIdTecnico(usuario);
+
+            // Primero verificar que el ticket pertenece al técnico y está en estado borrable
+            String sqlVerificar = """
+                SELECT estado FROM Ticket
+                WHERE id = ? AND id_tecnico = ?
+            """;
+
+            Connection con = ConexionBD.getConnection();
+            PreparedStatement psVerificar = con.prepareStatement(sqlVerificar);
+            psVerificar.setInt(1, idTicket);
+            psVerificar.setInt(2, idTecnico);
+
+            ResultSet rs = psVerificar.executeQuery();
+            if (!rs.next()) {
+                Log.escribirLog("Intento de borrar ticket que no pertenece al técnico: " + usuario);
+                return false;
+            }
+
+            String estado = rs.getString("estado");
+            // Solo se pueden borrar tickets pendientes o cancelados
+            if (!estado.equalsIgnoreCase("Pendiente") && !estado.equalsIgnoreCase("Cancelado")) {
+                Log.escribirLog("Intento de borrar ticket en estado: " + estado);
+                return false;
+            }
+
+            // Marcar como borrado
+            String sql = """
+                UPDATE Ticket 
+                SET estado = 'Borrado', fecha_ultima_edicion = NOW()
+                WHERE id = ? AND id_tecnico = ?
+            """;
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, idTicket);
+            ps.setInt(2, idTecnico);
+
+            boolean resultado = ps.executeUpdate() == 1;
+            if (resultado) {
+                Log.escribirLog("Ticket " + idTicket + " marcado como borrado por técnico " + usuario);
+            }
+            return resultado;
+
+        } catch (Exception e) {
+            Log.escribirLog("Error borrando ticket: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Reanudar un ticket que estaba en estado Cancelado
+     * Vuelve a estado Pendiente
+     */
+    public static boolean reanudarTicket(
+            String usuario,
+            int idTicket
+    ) {
+        try {
+            int idTecnico = obtenerIdTecnico(usuario);
+
+            String sql = """
+                UPDATE Ticket 
+                SET estado = 'Pendiente', fecha_ultima_edicion = NOW()
+                WHERE id = ? AND id_tecnico = ? AND estado = 'Cancelado'
+            """;
+
+            Connection con = ConexionBD.getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, idTicket);
+            ps.setInt(2, idTecnico);
+
+            boolean resultado = ps.executeUpdate() == 1;
+            if (resultado) {
+                Log.escribirLog("Ticket " + idTicket + " reanudado por técnico " + usuario);
+            } else {
+                Log.escribirLog("No se pudo reanudar ticket " + idTicket + " - puede que no esté en estado Cancelado");
+            }
+            return resultado;
+
+        } catch (Exception e) {
+            Log.escribirLog("Error reanudando ticket: " + e.getMessage());
+            return false;
+        }
+    }
 }
