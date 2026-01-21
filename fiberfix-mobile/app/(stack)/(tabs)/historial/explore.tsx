@@ -1,8 +1,10 @@
+import CustomAlert from '@/components/CustomAlert';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useUser } from '@/context/UserContext';
 import { useFocusEffect } from '@react-navigation/native';
+import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import TcpSocket from 'react-native-tcp-socket';
 
 // Definimos el Ticket
@@ -22,6 +24,7 @@ type Ticket = {
 
 export default function ExploreScreen() {
   const { userId } = useUser();
+  const { ticketId } = useLocalSearchParams();
   const [historyData, setHistoryData] = useState<Ticket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 
@@ -33,7 +36,11 @@ export default function ExploreScreen() {
       if (userId) {
         cliente.write(`HISTORY|${userId}\n`); // Enviar el ID dinámico del usuario autenticado
       } else {
-        Alert.alert('Error', 'No se pudo obtener el ID del usuario.');
+        CustomAlert({
+          title: 'Error',
+          message: 'No se pudo obtener el ID del usuario.',
+          buttons: [{ text: 'OK', onPress: () => {} }],
+        });
         cliente.end();
       }
     });
@@ -46,7 +53,11 @@ export default function ExploreScreen() {
         const tickets: Ticket[] = JSON.parse(text);
         setHistoryData(tickets);
       }catch (error) {
-        Alert.alert('Error', 'El servidor no ha devuelto un JSON válido.\nMira la consola.');
+        CustomAlert({
+          title: 'Error',
+          message: 'El servidor no ha devuelto un JSON válido.\nMira la consola.',
+          buttons: [{ text: 'OK', onPress: () => {} }],
+        });
         console.error('JSON inválido:', error);
       } finally {
         cliente.end();
@@ -54,13 +65,26 @@ export default function ExploreScreen() {
     });
 
     cliente.on('error', () => {
-      Alert.alert('Error', 'No se pudo conectar con el servidor');
+      CustomAlert({
+        title: 'Error',
+        message: 'No se pudo conectar con el servidor',
+        buttons: [{ text: 'OK', onPress: () => {} }],
+      });
     });
   };
 
   useEffect(() => {
     loadHistory();
   }, []);
+
+  useEffect(() => {
+    if (ticketId) {
+      const ticket = historyData.find((item) => item.numero_ticket === Number(ticketId));
+      if (ticket) {
+        setSelectedTicket(ticket);
+      }
+    }
+  }, [ticketId, historyData]);
 
   useFocusEffect(
     React.useCallback(() => {
