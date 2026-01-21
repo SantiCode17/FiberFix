@@ -1,4 +1,5 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useUser } from '@/context/UserContext';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -14,7 +15,8 @@ import TcpSocket from 'react-native-tcp-socket';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [userId, setUserId] = useState('');
+  const { setUserId } = useUser();
+  const [userId, setUserIdState] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -69,9 +71,10 @@ export default function LoginScreen() {
       userId,
       password,
       () => {
+        setUserId(userId); // Guardar el userId en el contexto
         setStatusMessage({ text: 'Login correcto', type: 'success' });
         setTimeout(() => {
-          router.replace({ pathname: '../home', params: { userId } });
+          router.replace({ pathname: '../home' });
         }, 1000); // Esperar 1 segundo antes de redirigir
       }, () => {
         setStatusMessage({ text: 'Credenciales incorrectas.', type: 'error' });
@@ -117,7 +120,7 @@ export default function LoginScreen() {
                       placeholder="Ej: TEC001"
                       placeholderTextColor="#CBD5E1"
                       value={userId}
-                      onChangeText={setUserId}
+                      onChangeText={setUserIdState}
                       autoCapitalize="characters"
                     />
                   </View>

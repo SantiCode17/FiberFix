@@ -62,12 +62,12 @@ public class TicketDAO {
             double lat,
             double lon
     ) {
-        try{
+        try {
             int idTecnico = obtenerIdTecnico(usuario); // Sacamos su id
 
-            if (existeTicket(numeroTicket, idTecnico)){
+            if (existeTicket(numeroTicket, idTecnico)) {
                 String estado = obtenerEstadoTicket(numeroTicket, idTecnico);
-                if ("Terminado".equalsIgnoreCase(estado)){
+                if ("Terminado".equalsIgnoreCase(estado)) {
                     return 2; // Codigo para ticket ya finalizado
                 }
                 return 0; // El ticket ya existe
@@ -90,7 +90,7 @@ public class TicketDAO {
             // Guardar Posicion
             PosicionDAO.guardarPosicion(idTecnico, numeroTicket, lat, lon);
             return 1;
-        }catch (SQLException e){
+        } catch (SQLException e) {
             Log.escribirLog("Error iniciar ticket: " + e.getMessage());
             return -1;
         }
@@ -152,6 +152,69 @@ public class TicketDAO {
         } catch (Exception e) {
             Log.escribirLog("Error incidencia: " + e.getMessage());
             return false;
+        }
+    }
+
+    // Recuperar historial de Técnico
+    public static String obtenerHistorial(String usuario) {
+        StringBuilder json = new StringBuilder();
+        json.append("[");
+
+        String sql = """
+                SELECT t.id, t.numero_ticket, t.estado, t.motivo, t.descripcion, t.fecha_creacion, t.fecha_inicio, t.fecha_cierre
+                FROM Ticket t
+                JOIN Tecnico te ON t.id_tecnico = te.id
+                WHERE te.usuario = ?
+                ORDER BY t.fecha_creacion DESC
+                """;
+
+        try (
+                Connection con = ConexionBD.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql);
+        ){
+            ps.setString(1, usuario);
+            ResultSet rs = ps.executeQuery();
+
+            boolean primero = true;
+
+            while (rs.next()) {
+                if (!primero) json.append(",");
+                primero = false;
+
+                json.append("{")
+                        .append("\"id\":").append(rs.getInt("id")).append(",")
+                        .append("\"numero_ticket\":").append(rs.getInt("numero_ticket")).append(",")
+                        .append("\"estado\":\"").append(rs.getString("estado")).append("\",")
+                        .append("\"motivo\":").append(
+                                rs.getString("motivo") == null
+                                        ? "null"
+                                        : "\"" + rs.getString("motivo") + "\""
+                        ).append(",")
+                        .append("\"descripcion\":").append(
+                                rs.getString("descripcion") == null
+                                        ? "null"
+                                        : "\"" + rs.getString("descripcion") + "\""
+                        ).append(",")
+                        .append("\"fecha_creacion\":\"").append(rs.getString("fecha_creacion")).append("\",")
+                        .append("\"fecha_inicio\":").append(
+                                rs.getString("fecha_inicio") == null
+                                        ? "null"
+                                        : "\"" + rs.getString("fecha_inicio") + "\""
+                        ).append(",")
+                        .append("\"fecha_cierre\":").append(
+                                rs.getString("fecha_cierre") == null
+                                        ? "null"
+                                        : "\"" + rs.getString("fecha_cierre") + "\""
+                        )
+                        .append("}");
+            }
+
+            json.append("]");
+            return json.toString();
+
+        } catch (Exception e) {
+            Log.escribirLog("Error HISTORY: " + e.getMessage());
+            return "[]";
         }
     }
 }

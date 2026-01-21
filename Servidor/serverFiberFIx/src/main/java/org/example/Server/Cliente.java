@@ -4,11 +4,9 @@ import org.example.DAO.PosicionDAO;
 import org.example.DAO.TecnicoDAO;
 import org.example.DAO.TicketDAO;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -24,9 +22,9 @@ public class Cliente implements Runnable {
     public void run() {
         try (
                 BufferedReader entrada = new BufferedReader(
-                        new InputStreamReader(socket.getInputStream()));
+                        new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
                 PrintWriter salida = new PrintWriter(
-                        socket.getOutputStream(), true)
+                        new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
         ) {
             String mensaje = entrada.readLine();
             if (mensaje == null) return;
@@ -48,6 +46,9 @@ public class Cliente implements Runnable {
                     break;
                 case "INCIDENT":
                     manejarIncident(partes, salida);
+                    break;
+                case "HISTORY":
+                    manejarHistory(partes, salida);
                     break;
                 default:
                     salida.println("ERROR_UNKNOWN_ACTION");
@@ -129,5 +130,17 @@ public class Cliente implements Runnable {
         }catch (Exception e){
             salida.println("INCIDENT_ERROR");
         }
+    }
+
+    public void manejarHistory(String[] partes, PrintWriter salida){
+        if (partes.length != 2) {
+            salida.println("HISTORY_ERROR");
+            return;
+        }
+
+        String usuario = partes[1];
+
+        String json = TicketDAO.obtenerHistorial(usuario);
+        salida.println(json);
     }
 }
