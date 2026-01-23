@@ -1,5 +1,5 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React from 'react';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { StyleProp, TextStyle } from 'react-native';
 
 const MAPPING: Record<string, keyof typeof MaterialIcons.glyphMap> = {
@@ -24,13 +24,18 @@ const MAPPING: Record<string, keyof typeof MaterialIcons.glyphMap> = {
   'xmark.circle.fill': 'cancel',
   'info.circle.fill': 'info',
 
-  // Nuevos para Historial y Detalle
+  // UI General
   'calendar': 'today',
   'person.fill': 'person',
   'tag.fill': 'label',
   'chevron.right': 'chevron-right',
   'close': 'close',
   'location.fill': 'place',
+  
+  // Acciones (Sprint 3)
+  'pencil': 'edit',
+  'trash': 'delete',
+  'save': 'save',
 };
 
 export function IconSymbol({

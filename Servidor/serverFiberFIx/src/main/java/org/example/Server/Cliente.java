@@ -50,6 +50,15 @@ public class Cliente implements Runnable {
                 case "HISTORY":
                     manejarHistory(partes, salida);
                     break;
+                case "EDIT":
+                    manejarEdit(partes, salida);
+                    break;
+                case "DELETE":
+                    manejarDelete(partes, salida);
+                    break;
+                case "RESUME":
+                    manejarResume(partes, salida);
+                    break;
                 default:
                     salida.println("ERROR_UNKNOWN_ACTION");
             }
@@ -142,5 +151,79 @@ public class Cliente implements Runnable {
 
         String json = TicketDAO.obtenerHistorial(usuario);
         salida.println(json);
+    }
+
+    /**
+     * Maneja la edición de un ticket
+     * Formato: EDIT|usuario|idTicket|motivo|descripcion
+     */
+    public void manejarEdit(String[] partes, PrintWriter salida) {
+        try{
+            if (partes.length < 5) {
+                salida.println("EDIT_ERROR");
+                return;
+            }
+
+            String usuario = partes[1];
+            int idTicket = Integer.parseInt(partes[2]);
+            String motivo = partes[3];
+            String descripcion = partes[4];
+
+            boolean ok = TicketDAO.editarTicket(usuario, idTicket, motivo, descripcion);
+            salida.println(ok ? "EDIT_OK" : "EDIT_ERROR");
+            System.out.println(ok ? "EDIT_OK" : "EDIT_ERROR");
+
+        }catch (Exception e){
+            Log.escribirLog("Error en manejarEdit: " + e.getMessage());
+            salida.println("EDIT_ERROR");
+        }
+    }
+
+    /**
+     * Maneja la eliminación (borrado lógico) de un ticket
+     * Formato: DELETE|usuario|idTicket
+     */
+    public void manejarDelete(String[] partes, PrintWriter salida) {
+        try{
+            if (partes.length != 3) {
+                salida.println("DELETE_ERROR");
+                return;
+            }
+
+            String usuario = partes[1];
+            int idTicket = Integer.parseInt(partes[2]);
+
+            boolean ok = TicketDAO.marcarComoBorrado(usuario, idTicket);
+            salida.println(ok ? "DELETE_OK" : "DELETE_ERROR");
+            System.out.println(ok ? "DELETE_OK" : "DELETE_ERROR");
+
+        }catch (Exception e){
+            Log.escribirLog("Error en manejarDelete: " + e.getMessage());
+            salida.println("DELETE_ERROR");
+        }
+    }
+
+    /**
+     * Maneja la reanudación de un ticket en estado Cancelado
+     * Formato: RESUME|usuario|idTicket
+     */
+    public void manejarResume(String[] partes, PrintWriter salida) {
+        try{
+            if (partes.length != 3) {
+                salida.println("RESUME_ERROR");
+                return;
+            }
+
+            String usuario = partes[1];
+            int idTicket = Integer.parseInt(partes[2]);
+
+            boolean ok = TicketDAO.reanudarTicket(usuario, idTicket);
+            salida.println(ok ? "RESUME_OK" : "RESUME_ERROR");
+            System.out.println(ok ? "RESUME_OK" : "RESUME_ERROR");
+
+        }catch (Exception e){
+            Log.escribirLog("Error en manejarResume: " + e.getMessage());
+            salida.println("RESUME_ERROR");
+        }
     }
 }
