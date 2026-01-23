@@ -24,17 +24,20 @@ CREATE TABLE Ticket
     id              INT PRIMARY KEY AUTO_INCREMENT,
     numero_ticket   INT NOT NULL,
     /*Enumeracion de estados, si no hay un estado asignado, por defecto es Pendiente*/
-    estado          ENUM ('Pendiente', 'En Proceso', 'Terminado', 'Cancelado') NOT NULL DEFAULT 'Pendiente',
-    /*Enumeración de estados de la incidendia*/
-    motivo          ENUM ('Cliente Ausente', 'Instalación Rota', 'Falta Material', 'Sin Acceso', 'Perro Suelto', 'Otros')   NULL DEFAULT 'Falta Material',
-    descripcion     VARCHAR(200)    NULL,
-
+    estado          ENUM ('Pendiente', 'En Proceso', 'Terminado', 'Cancelado', 'Borrado') NOT NULL DEFAULT 'Pendiente',
+    /*Motivo de la incidencia o etiqueta - ahora es VARCHAR para permitir valores personalizados*/
+    motivo          VARCHAR(100)    NULL,
+    descripcion     VARCHAR(500)    NULL,
     /*Fecha en la que se crea el ticket*/
     fecha_creacion  DATETIME    DEFAULT CURRENT_TIMESTAMP,
     /*Fecha en la que se inicia el ticket*/
     fecha_inicio    DATETIME    NULL,
-    /*Fehca en la que se completa el ticket*/
+    /*Fecha en la que se completa el ticket*/
     fecha_cierre    DATETIME    NULL,
+    /*Fecha de última edición (para auditoría)*/
+    fecha_ultima_edicion DATETIME NULL,
+    /*Imagen adjunta - LONGBLOB para almacenar datos binarios*/
+    imagen          LONGBLOB    NULL,
     id_tecnico      INT NOT NULL,
     dni_cliente     VARCHAR(9),
 
