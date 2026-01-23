@@ -214,14 +214,14 @@ export default function ExploreScreen() {
                     className={`flex-row items-center px-5 py-3 rounded-full border mr-2 ${sortOrder === 'reciente' ? 'bg-fiber-blue' : 'bg-gray-50'}`}
                 >
                     <Text
-                        className={`ml-2 text-sm font-bold ${sortOrder === 'reciente' ? 'text-white' : 'text-black'}`}>Reciente</Text>
+                        className={` text-sm font-bold ${sortOrder === 'reciente' ? 'text-white' : 'text-black'}`}>Reciente</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     onPress={() => setSortOrder('antiguo')}
                     className={`flex-row items-center  px-5 py-3 rounded-full border ${sortOrder === 'antiguo' ? 'bg-fiber-blue' : 'bg-gray-50'}`}
                 >
                     <Text
-                        className={`ml-2 text-sm font-bold ${sortOrder === 'antiguo' ? 'text-white' : 'text-black'}`}>Antiguo</Text>
+                        className={`text-sm font-bold ${sortOrder === 'antiguo' ? 'text-white' : 'text-black'}`}>Antiguo</Text>
                 </TouchableOpacity>
             </View>
 
