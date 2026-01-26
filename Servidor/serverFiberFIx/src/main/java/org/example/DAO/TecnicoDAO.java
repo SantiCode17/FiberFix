@@ -28,7 +28,7 @@ public class TecnicoDAO {
     }
 
     public static boolean insertarTecnico(Tecnico tecnico){
-        String sql = "INSERT INTO Tecnico (usuario,contrasenya,nombre,apellido) VALUES ?,?,?,?";
+        String sql = "INSERT INTO Tecnico (usuario,contrasenya,nombre,apellido) VALUES (?,?,?,?);";
 
         try{
             PreparedStatement preparedStatement = ConexionBD.getConnection().prepareStatement(sql);
@@ -42,7 +42,7 @@ public class TecnicoDAO {
             return resultado==1;
 
         } catch (SQLException e) {
-            Log.escribirLog("Error al crear técnico: "+e);
+            Log.escribirLog("Error al crear técnico: "+e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -64,10 +64,41 @@ public class TecnicoDAO {
             resultSet.close();
 
         } catch (SQLException e) {
-            Log.escribirLog("Error al cargar técnicos: "+e);
+            Log.escribirLog("Error al cargar técnicos: "+e.getMessage());
             throw new RuntimeException(e);
         }
 
         return tecnicos;
+    }
+
+    public static boolean comprobarTecnico(String usuario){
+        String sql = "SELECT * FROM Tecnico WHERE usuario = ?";
+        try{
+            PreparedStatement preparedStatement = ConexionBD.getConnection().prepareStatement(sql);
+            preparedStatement.setString(1, usuario);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            return resultSet.next();
+
+        } catch (SQLException e) {
+            Log.escribirLog("Error al comprobar tecnico: "+e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static int getIdTecnico(String usuario){
+        String sql = "SELECT id FROM Tecnico WHERE usuario = ?";
+        try{
+            PreparedStatement preparedStatement = ConexionBD.getConnection().prepareStatement(sql);
+            preparedStatement.setString(1, usuario);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            resultSet.next();
+            return resultSet.getInt(1);
+
+        } catch (SQLException e) {
+            Log.escribirLog("Error al comprobar tecnico: "+e.getMessage());
+            throw new RuntimeException(e);
+        }
     }
 }

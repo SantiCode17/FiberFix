@@ -1,5 +1,11 @@
 package org.example.Server;
 
+import org.example.DAO.ClienteDAO;
+import org.example.DAO.TecnicoDAO;
+import org.example.DAO.TicketDAO;
+import org.example.DTO.Tecnico;
+import org.example.DTO.Ticket;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -9,6 +15,7 @@ public class Server {
 
 
     public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
         String opcion = "0";
         while (!opcion.equals("3")){
             opcion = menuPrincipal();
@@ -18,26 +25,133 @@ public class Server {
                     break;
                 case "2":
                     String opcion2 = "0";
-                    while (!opcion2.equals("9")){
+                    while (!opcion2.equals("8")){
                         opcion2=menuAdministracion();
                         switch (opcion2){
                             case "1":
+                                TecnicoDAO.obtenerTecnicos().forEach(t -> t.mostrar());
                                 break;
                             case "2":
+                                String usuario;
+                                do {
+                                    System.out.print("Ingrese el usuario: ");
+                                    usuario = sc.nextLine();
+                                    if (TecnicoDAO.comprobarTecnico(usuario)){
+                                        System.out.println("El técnico ya existe");
+                                    }
+                                }while (TecnicoDAO.comprobarTecnico(usuario));
+
+                                System.out.print("Introduzca la contraseña: ");
+                                String contra = sc.nextLine();
+
+                                System.out.print("Introduzca el nombre: ");
+                                String nombre = sc.nextLine();
+
+                                System.out.print("Introduzca el apellido: ");
+                                String apellido = sc.nextLine();
+
+                                Tecnico tecnico = new Tecnico(usuario, contra, nombre, apellido);
+
+                                if (TecnicoDAO.insertarTecnico(tecnico)){
+                                    System.out.println("El técnico se ha insertado correctamente");
+                                } else {
+                                    System.out.println("El técnico no se ha insertado");
+                                }
                                 break;
                             case "3":
+                                ClienteDAO.obtenerCLientes().forEach(c -> c.mostrar());
                                 break;
                             case "4":
+                                String dni;
+                                do{
+                                    System.out.print("Ingrese el dni: ");
+                                    dni = sc.nextLine();
+                                    if (ClienteDAO.comprobarCliente(dni)){
+                                        System.out.println("El cliente ya existe");
+                                    }
+                                }while (ClienteDAO.comprobarCliente(dni));
+
+                                System.out.print("Introduzca el nombre: ");
+                                String nombreCliente = sc.nextLine();
+                                System.out.print("Introduzca el apellido: ");
+                                String apellidoCliente = sc.nextLine();
+                                System.out.print("Introduzca la direccion: ");
+                                String direccionCliente = sc.nextLine();
+                                System.out.print("Introduzca el telefono: ");
+                                String telefonoCliente = sc.nextLine();
+                                org.example.DTO.Cliente cliente = new org.example.DTO.Cliente(dni, nombreCliente, apellidoCliente, direccionCliente, telefonoCliente);
+                                if (ClienteDAO.insertarCliente(cliente)){
+                                    System.out.println("El cliente se ha insertado correctamente");
+                                } else {
+                                    System.out.println("El cliente no se ha insertado");
+                                }
                                 break;
                             case "5":
+                                TicketDAO.obtenerTickets().forEach(t -> t.mostrar());
                                 break;
                             case "6":
+                                String idString;
+                                do {
+                                    System.out.print("Ingrese el número del ticket: ");
+                                    idString = sc.nextLine();
+                                    if (!idString.matches("\\d+")){
+                                        System.out.println("Introduce un número entero");
+                                    } else if (TicketDAO.comprobarTicket(Integer.parseInt(idString))){
+                                        System.out.println("El ticket ya existe");
+                                    }
+                                }while ((!idString.matches("\\d+"))||(TicketDAO.comprobarTicket(Integer.parseInt(idString))));
+                                System.out.print("Introduzca una descripción del ticket: ");
+                                String descripcion = sc.nextLine();
+
+                                String usuarioTecnico;
+                                do {
+                                    System.out.print("Ingrese el usuario del técnico: ");
+                                    usuarioTecnico = sc.nextLine();
+                                    if (!TecnicoDAO.comprobarTecnico(usuarioTecnico)){
+                                        System.out.println("El técnico no existe");
+                                    }
+                                }while (!TecnicoDAO.comprobarTecnico(usuarioTecnico));
+
+                                int idTecnico = TecnicoDAO.getIdTecnico(usuarioTecnico);
+
+                                String dniTicket;
+                                do{
+                                    System.out.print("Ingrese el dni del cliente: ");
+                                    dniTicket = sc.nextLine();
+                                    if (!ClienteDAO.comprobarCliente(dniTicket)){
+                                        System.out.println("El cliente no existe");
+                                    }
+                                }while (!ClienteDAO.comprobarCliente(dniTicket));
+
+                                Ticket ticket = new Ticket(idTecnico, descripcion, idTecnico, dniTicket);
+
+                                if (TicketDAO.crearTicket(ticket)){
+                                    System.out.println("El ticket se ha insertado correctamente");
+                                } else {
+                                    System.out.println("El ticket no se ha insertado");
+                                }
+
                                 break;
                             case "7":
+                                String idStringTicket;
+                                do {
+                                    System.out.print("Ingrese el número del ticket: ");
+                                    idStringTicket = sc.nextLine();
+                                    if (!idStringTicket.matches("\\d+")){
+                                        System.out.println("Introduce un número entero");
+                                    } else if (!TicketDAO.comprobarTicket(Integer.parseInt(idStringTicket))){
+                                        System.out.println("El ticket no existe");
+                                    }
+                                }while ((!idStringTicket.matches("\\d+"))||(!TicketDAO.comprobarTicket(Integer.parseInt(idStringTicket))));
+
+                                if (TicketDAO.eliminarTicket(Integer.parseInt(idStringTicket))){
+                                    System.out.println("El ticket se ha eliminado correctamente");
+                                } else {
+                                    System.out.println("El ticket no se ha eliminado");
+                                }
+
                                 break;
                             case "8":
-                                break;
-                            case "9":
                                 System.out.println("Volviendo...");
                                 break;
                             default:
@@ -98,8 +212,7 @@ public class Server {
         System.out.println("║ " + CIAN    + "5️⃣  Ver tickets               " + AZUL + "     ║");
         System.out.println("║ " + CIAN    + "6️⃣  Crear ticket              " + AZUL + "     ║");
         System.out.println("║ " + ROJO    + "7️⃣  Eliminar ticket           " + AZUL + "     ║");
-        System.out.println("║ " + ROJO    + "8️⃣  Modificar ticket          " + AZUL + "     ║");
-        System.out.println("║ " + ROJO    + "9️⃣  Volver atrás              " + AZUL + "     ║");
+        System.out.println("║ " + ROJO    + "8️⃣  Volver atrás          " + AZUL + "         ║");
         System.out.println("╚════════════════════════════════════╝" + RESET);
 
         System.out.print("👉 Seleccione una opción: ");
