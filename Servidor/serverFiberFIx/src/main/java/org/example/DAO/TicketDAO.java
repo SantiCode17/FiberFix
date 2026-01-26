@@ -1,6 +1,7 @@
 package org.example.DAO;
 
 import org.example.DTO.Cliente;
+import org.example.DTO.Estado;
 import org.example.DTO.Ticket;
 import org.example.Server.Log;
 
@@ -231,8 +232,31 @@ public class TicketDAO {
             ResultSet resultSet = statement.executeQuery(sql);
 
             while (resultSet.next()){
+                Estado estado=Estado.CANCELADO;
+                switch (resultSet.getString(3)){
+                    case "Pendiente":
+                        estado=Estado.PENDIENTE;
+                        break;
+                    case "En Proceso":
+                        estado=Estado.ENPROCESO;
+                        break;
+                    case "Terminado":
+                        estado=Estado.TERMINADO;
+                        break;
+                }
+                Timestamp tsInicio = resultSet.getTimestamp(7);
+                Timestamp tsCierre = resultSet.getTimestamp(8);
 
-                //Añadir constructor
+                tickets.add(new Ticket(
+                        resultSet.getInt(1),
+                        estado,
+                        resultSet.getTimestamp(6).toLocalDateTime(),
+                        resultSet.getString(5),
+                        tsInicio != null ? tsInicio.toLocalDateTime() : null,
+                        tsCierre != null ? tsCierre.toLocalDateTime() : null,
+                        resultSet.getInt(9),
+                        resultSet.getString(10)
+                ));
             }
 
             statement.close();
@@ -244,5 +268,56 @@ public class TicketDAO {
         }
 
         return tickets;
+    }
+
+
+    public static boolean crearTicket(Ticket ticket){
+        String sql = "INSERT INTO Ticket (numero_ticket,estado,descripcion,fecha_creacion,id_tecnico,dni_cliente) VALUES (?,'Pendiente',?,?,?,?);";
+        try{
+            PreparedStatement preparedStatement = ConexionBD.getConnection().prepareStatement(sql);
+            preparedStatement.setInt(1,ticket.getId());
+            preparedStatement.setString(2, ticket.getDescripcion());
+            // Convertir LocalDateTime a Timestamp
+            preparedStatement.setTimestamp(3, java.sql.Timestamp.valueOf(ticket.getFechaCreacion()));
+            preparedStatement.setInt(4, ticket.getId_tecnico());
+            preparedStatement.setString(5, ticket.getDni());
+
+            int filas = preparedStatement.executeUpdate();
+            return filas == 1;
+        } catch (SQLException e) {
+            Log.escribirLog("Error al crear ticket: "+e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static boolean comprobarTicket(int id){
+        String sql = "SELECT * FROM Ticket WHERE numero_ticket = ?";
+
+        try{
+          PreparedStatement preparedStatement = ConexionBD.getConnection().prepareStatement(sql);
+          preparedStatement.setInt(1, id);
+          ResultSet resultSet = preparedStatement.executeQuery();
+          return resultSet.next();
+
+        } catch (SQLException e) {
+            Log.escribirLog("Error al comprobar ticket: "+e.getMessage());
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public static boolean eliminarTicket(int numero_ticket){
+        String sql = "DELETE FROM Ticket WHERE numero_ticket = ?";
+
+        try{
+            PreparedStatement preparedStatement = ConexionBD.getConnection().prepareStatement(sql);
+            preparedStatement.setInt(1,numero_ticket);
+            int filas = preparedStatement.executeUpdate();
+            return filas == 1;
+        } catch (SQLException e) {
+            Log.escribirLog("Error al eliminar ticket: "+e.getMessage());
+            throw new RuntimeException(e);
+        }
+
     }
 }
