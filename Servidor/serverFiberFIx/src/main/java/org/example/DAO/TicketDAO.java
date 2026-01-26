@@ -1,9 +1,12 @@
 package org.example.DAO;
 
+import org.example.DTO.Cliente;
+import org.example.DTO.Ticket;
 import org.example.Server.Log;
 
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 public class TicketDAO {
     // Sacar el idTecnico para las consultas
@@ -216,5 +219,30 @@ public class TicketDAO {
             Log.escribirLog("Error HISTORY: " + e.getMessage());
             return "[]";
         }
+    }
+
+    public static ArrayList<Ticket> obtenerTickets(){
+        String sql = "SELECT * FROM Ticket";
+
+        ArrayList<Ticket> tickets = new ArrayList<>();
+
+        try{
+            Statement statement = ConexionBD.getConnection().createStatement();
+            ResultSet resultSet = statement.executeQuery(sql);
+
+            while (resultSet.next()){
+
+                //Añadir constructor
+            }
+
+            statement.close();
+            resultSet.close();
+
+        } catch (SQLException e) {
+            Log.escribirLog("Error al cargar tickets: "+e);
+            throw new RuntimeException(e);
+        }
+
+        return tickets;
     }
 }
