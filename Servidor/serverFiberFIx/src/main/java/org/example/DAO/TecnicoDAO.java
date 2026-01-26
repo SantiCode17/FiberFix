@@ -3,10 +3,7 @@ package org.example.DAO;
 import org.example.DTO.Tecnico;
 import org.example.Server.Log;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 
 public class TecnicoDAO {
@@ -48,5 +45,29 @@ public class TecnicoDAO {
             Log.escribirLog("Error al crear técnico: "+e);
             throw new RuntimeException(e);
         }
+    }
+
+    public static ArrayList<Tecnico> obtenerTecnicos(){
+        String sql = "SELECT * FROM Tecnico";
+
+        ArrayList<Tecnico> tecnicos = new ArrayList<>();
+
+        try{
+            Statement statement = ConexionBD.getConnection().createStatement();
+            ResultSet resultSet = statement.executeQuery(sql);
+
+            while (resultSet.next()){
+                tecnicos.add(new Tecnico(resultSet.getInt(1),resultSet.getString(2),resultSet.getString(3),resultSet.getString(4),resultSet.getString(5)));
+            }
+
+            statement.close();
+            resultSet.close();
+
+        } catch (SQLException e) {
+            Log.escribirLog("Error al cargar técnicos: "+e);
+            throw new RuntimeException(e);
+        }
+
+        return tecnicos;
     }
 }
