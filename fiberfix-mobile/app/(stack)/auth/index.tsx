@@ -132,7 +132,7 @@ export default function LoginScreen() {
                   <View className="flex-row items-center bg-gray-50 rounded-[20px] border-2 border-gray-100 px-4 h-16">
                     <IconSymbol name="doc.text.fill" size={24} color="#64748B" />
                     <TextInput
-                      className="flex-1 ml-4 text-xl font-bold text-fiber-dark"
+                      className="flex-1 ml-4 text-xl font-bold text-black"
                       placeholder="••••••••"
                       placeholderTextColor="#CBD5E1"
                       value={password}
