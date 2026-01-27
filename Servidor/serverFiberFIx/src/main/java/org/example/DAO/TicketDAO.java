@@ -72,8 +72,10 @@ public class TicketDAO {
             if (existeTicket(numeroTicket, idTecnico)) {
                 String estado = obtenerEstadoTicket(numeroTicket, idTecnico);
                 if ("Terminado".equalsIgnoreCase(estado)) {
+                    Log.escribirLog("Ticket ya finalizado: " + numeroTicket);
                     return 2; // Codigo para ticket ya finalizado
                 }
+                Log.escribirLog("Ticket ya existe: " + numeroTicket);
                 return 0; // El ticket ya existe
             }
 
@@ -93,9 +95,13 @@ public class TicketDAO {
 
             // Guardar Posicion
             PosicionDAO.guardarPosicion(idTecnico, numeroTicket, lat, lon);
+            Log.escribirLog("Ticket creado correctamente: " + numeroTicket);
             return 1;
         } catch (SQLException e) {
             Log.escribirLog("Error iniciar ticket: " + e.getMessage());
+            return -1;
+        } catch (Exception e) {
+            Log.escribirLog("Error inesperado al iniciar ticket: " + e.getMessage());
             return -1;
         }
     }
@@ -262,20 +268,24 @@ public class TicketDAO {
 
     /**
      * Marcar un ticket como borrado (borrado lógico)
-     * Solo se puede borrar tickets que estén en estado Pendiente o Cancelado
+     * Códigos:
+     *  1 = OK
+     *  2 = ERROR_TERMINADO
+     * -1 = ERROR (no existe o no pertenece al técnico)
+     *  0 = ERROR (otro imprevisto / excepción)
      */
-    public static boolean marcarComoBorrado(
+    public static int marcarComoBorrado(
             String usuario,
             int idTicket
     ) {
         try {
             int idTecnico = obtenerIdTecnico(usuario);
 
-            // Primero verificar que el ticket pertenece al técnico y está en estado borrable
+            // Primero verificar que el ticket pertenece al técnico y obtener su estado
             String sqlVerificar = """
-                SELECT estado FROM Ticket
-                WHERE id = ? AND id_tecnico = ?
-            """;
+                    SELECT estado FROM Ticket
+                    WHERE id = ? AND id_tecnico = ?
+                """;
 
             Connection con = ConexionBD.getConnection();
             PreparedStatement psVerificar = con.prepareStatement(sqlVerificar);
@@ -284,23 +294,30 @@ public class TicketDAO {
 
             ResultSet rs = psVerificar.executeQuery();
             if (!rs.next()) {
-                Log.escribirLog("Intento de borrar ticket que no pertenece al técnico: " + usuario);
-                return false;
+                Log.escribirLog("DELETE: Ticket no existe o no pertenece al técnico. usuario=" + usuario + ", idTicket=" + idTicket);
+                return -1;
             }
 
             String estado = rs.getString("estado");
+
+            // Caso especial: ticket terminado
+            if ("Terminado".equalsIgnoreCase(estado)) {
+                Log.escribirLog("DELETE: Intento de borrar ticket terminado. idTicket=" + idTicket + ", usuario=" + usuario);
+                return 2;
+            }
+
             // Solo se pueden borrar tickets pendientes o cancelados
             if (!estado.equalsIgnoreCase("Pendiente") && !estado.equalsIgnoreCase("Cancelado")) {
-                Log.escribirLog("Intento de borrar ticket en estado: " + estado);
-                return false;
+                Log.escribirLog("DELETE: Intento de borrar ticket en estado no borrable: " + estado + " (idTicket=" + idTicket + ")");
+                return -1;
             }
 
             // Marcar como borrado
             String sql = """
-                UPDATE Ticket 
-                SET estado = 'Borrado', fecha_ultima_edicion = NOW()
-                WHERE id = ? AND id_tecnico = ?
-            """;
+                    UPDATE Ticket
+                    SET estado = 'Borrado', fecha_ultima_edicion = NOW()
+                    WHERE id = ? AND id_tecnico = ?
+                """;
 
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setInt(1, idTicket);
@@ -309,12 +326,13 @@ public class TicketDAO {
             boolean resultado = ps.executeUpdate() == 1;
             if (resultado) {
                 Log.escribirLog("Ticket " + idTicket + " marcado como borrado por técnico " + usuario);
+                return 1;
             }
-            return resultado;
+            return -1;
 
         } catch (Exception e) {
             Log.escribirLog("Error borrando ticket: " + e.getMessage());
-            return false;
+            return 0;
         }
     }
 
@@ -545,14 +563,20 @@ public class TicketDAO {
             Log.escribirLog("Error registrando incidencia con imágenes: " + e.getMessage());
             return false;
         } finally {
-            try {
-                if (con != null) {
+            if (con != null) {
+                try {
                     con.setAutoCommit(true);
+                } catch (SQLException e) {
+                    Log.escribirLog("Error reseteando autoCommit: " + e.getMessage());
                 }
-            } catch (SQLException e) {
-                Log.escribirLog("Error reseteando autoCommit: " + e.getMessage());
+                try {
+                    con.close();
+                } catch (SQLException e) {
+                    Log.escribirLog("Error cerrando conexión: " + e.getMessage());
+                }
             }
         }
+    }
     public static ArrayList<Ticket> obtenerTickets(){
         String sql = "SELECT * FROM Ticket";
 
