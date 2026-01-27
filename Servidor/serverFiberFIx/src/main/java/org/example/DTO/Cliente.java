@@ -54,4 +54,23 @@ public class Cliente {
     public void setTelefono(String telefono) {
         this.telefono = telefono;
     }
+
+    public void mostrar() {
+        final String RESET = "\u001B[0m";
+        final String CYAN = "\u001B[36m";
+        final String VERDE = "\u001B[32m";
+        final String AZUL = "\u001B[34m";
+        final String AMARILLO = "\u001B[33m";
+        final String GRIS = "\u001B[90m";
+
+        System.out.println(
+                CYAN + "[Cliente] " + RESET +
+                        "DNI: " + GRIS + dni + RESET +
+                        " | Nombre: " + VERDE + nombre + " " + apellido + RESET +
+                        " | Dirección: " + AZUL + direccionInstalacion + RESET +
+                        " | Tel: " + AMARILLO + telefono + RESET
+        );
+    }
+
+
 }
