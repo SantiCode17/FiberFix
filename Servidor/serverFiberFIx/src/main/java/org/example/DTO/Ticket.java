@@ -5,10 +5,12 @@ import java.time.LocalDateTime;
 public class Ticket {
     private int id;
     private Estado estado;
+    private String motivo;
     private String descripcion;
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaInicio;
     private LocalDateTime fechaCierre;
+    private LocalDateTime fechaUltimaEdicion;
     private int id_tecnico;
     private String dni;
 
@@ -60,6 +62,14 @@ public class Ticket {
         this.descripcion = descripcion;
         this.fechaCreacion = fechaCreacion;
         this.fechaInicio = fechaInicio;
+        this.id_tecnico = id_tecnico;
+        this.dni = dni;
+    }
+
+    public Ticket(int id, String descripcion,  int id_tecnico, String dni) {
+        this.id = id;
+        this.descripcion = descripcion;
+        this.fechaCreacion = LocalDateTime.now();
         this.id_tecnico = id_tecnico;
         this.dni = dni;
     }
@@ -122,5 +132,51 @@ public class Ticket {
 
     public void setDni(String dni) {
         this.dni = dni;
+    }
+
+    public String getMotivo() {
+        return motivo;
+    }
+
+    public void setMotivo(String motivo) {
+        this.motivo = motivo;
+    }
+
+    public LocalDateTime getFechaUltimaEdicion() {
+        return fechaUltimaEdicion;
+    }
+
+    public void setFechaUltimaEdicion(LocalDateTime fechaUltimaEdicion) {
+        this.fechaUltimaEdicion = fechaUltimaEdicion;
+    }
+
+    public void mostrar() {
+        final String RESET = "\u001B[0m";
+        final String AZUL = "\u001B[34m";
+        final String VERDE = "\u001B[32m";
+        final String AMARILLO = "\u001B[33m";
+        final String ROJO = "\u001B[31m";
+        final String CYAN = "\u001B[36m";
+
+        String colorEstado;
+        switch (estado) {
+            case PENDIENTE -> colorEstado = AMARILLO;
+            case ENPROCESO -> colorEstado = AZUL;
+            case TERMINADO -> colorEstado = VERDE;
+            default -> colorEstado = RESET;
+        }
+
+        String inicio = (fechaInicio != null) ? fechaInicio.toString() : "Sin definir";
+        String cierre = (fechaCierre != null) ? fechaCierre.toString() : "Sin definir";
+
+        System.out.println(
+                CYAN + "[Ticket #" + id + "] " + RESET +
+                        "Estado: " + colorEstado + estado + RESET +
+                        " | Desc: " + descripcion +
+                        " | Técnico: " + id_tecnico +
+                        " | DNI: " + ROJO + dni + RESET +
+                        " | Inicio: " + inicio +
+                        " | Cierre: " + cierre
+        );
     }
 }
