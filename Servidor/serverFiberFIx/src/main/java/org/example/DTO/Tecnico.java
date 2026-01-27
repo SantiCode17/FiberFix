@@ -57,4 +57,22 @@ public class Tecnico {
     public void setApellido(String apellido) {
         this.apellido = apellido;
     }
+
+    public void mostrar() {
+        final String RESET = "\u001B[0m";
+        final String AZUL = "\u001B[34m";
+        final String VERDE = "\u001B[32m";
+        final String AMARILLO = "\u001B[33m";
+        final String ROJO = "\u001B[31m";
+        final String CYAN = "\u001B[36m";
+        final String GRIS = "\u001B[90m";
+
+        System.out.println(
+                CYAN + "[Técnico #" + id + "] " + RESET +
+                        "Usuario: " + AZUL + usuario + RESET +
+                        " | Nombre: " + VERDE + nombre + " " + apellido + RESET +
+                        " | Pass: " + GRIS + contrasenya + RESET
+        );
+    }
+
 }
