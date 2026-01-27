@@ -349,4 +349,205 @@ public class TicketDAO {
             return false;
         }
     }
+
+    /**
+     * Obtener el ID de un ticket por su número
+     * Usado para guardar imágenes y auditoría
+     *
+     * @param numeroTicket Número del ticket
+     * @param idTecnico ID del técnico propietario
+     * @return ID del ticket, -1 si no existe
+     */
+    public static int obtenerIdTicket(int numeroTicket, int idTecnico) {
+        String sql = "SELECT id FROM Ticket WHERE numero_ticket = ? AND id_tecnico = ?";
+
+        try (Connection con = ConexionBD.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, numeroTicket);
+            ps.setInt(2, idTecnico);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("id");
+            }
+
+        } catch (SQLException e) {
+            Log.escribirLog("Error obteniendo ID de ticket: " + e.getMessage());
+        }
+        return -1;
+    }
+
+    /**
+     * Obtener detalles completos de un ticket (incluyendo imágenes)
+     *
+     * @param usuario Usuario (técnico)
+     * @param idTicket ID del ticket
+     * @return String JSON con detalles del ticket e imágenes
+     */
+    public static String obtenerDetalleTicket(String usuario, int idTicket) {
+        try {
+            int idTecnico = obtenerIdTecnico(usuario);
+
+            String sql = """
+                SELECT id, numero_ticket, estado, motivo, descripcion, 
+                       fecha_creacion, fecha_inicio, fecha_cierre, fecha_ultima_edicion
+                FROM Ticket
+                WHERE id = ? AND id_tecnico = ?
+            """;
+
+            Connection con = ConexionBD.getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, idTicket);
+            ps.setInt(2, idTecnico);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                StringBuilder json = new StringBuilder();
+                json.append("{")
+                        .append("\"id\":").append(rs.getInt("id")).append(",")
+                        .append("\"numero_ticket\":").append(rs.getInt("numero_ticket")).append(",")
+                        .append("\"estado\":\"").append(rs.getString("estado")).append("\",")
+                        .append("\"motivo\":").append(
+                                rs.getString("motivo") == null ? "null" : "\"" + rs.getString("motivo") + "\""
+                        ).append(",")
+                        .append("\"descripcion\":").append(
+                                rs.getString("descripcion") == null ? "null" : "\"" + rs.getString("descripcion") + "\""
+                        ).append(",")
+                        .append("\"fecha_creacion\":\"").append(rs.getString("fecha_creacion")).append("\",")
+                        .append("\"fecha_inicio\":").append(
+                                rs.getString("fecha_inicio") == null ? "null" : "\"" + rs.getString("fecha_inicio") + "\""
+                        ).append(",")
+                        .append("\"fecha_cierre\":").append(
+                                rs.getString("fecha_cierre") == null ? "null" : "\"" + rs.getString("fecha_cierre") + "\""
+                        ).append(",")
+                        .append("\"fecha_ultima_edicion\":").append(
+                                rs.getString("fecha_ultima_edicion") == null ? "null" : "\"" + rs.getString("fecha_ultima_edicion") + "\""
+                        ).append(",")
+                        .append("\"imagenes\":").append(ImagenDAO.obtenerImagenes(idTicket))
+                        .append("}");
+
+                return json.toString();
+            }
+
+        } catch (SQLException e) {
+            Log.escribirLog("Error obteniendo detalle de ticket: " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Registrar una incidencia con imágenes (versión mejorada)
+     * Guarda la incidencia y todas las imágenes asociadas en una transacción
+     *
+     * @param usuario Usuario (técnico)
+     * @param numeroTicket Número del ticket
+     * @param motivo Motivo de la incidencia
+     * @param descripcion Descripción de la incidencia
+     * @param imagenes Array de byte arrays con datos de imágenes
+     * @param nombreArchivos Array de nombres de archivos
+     * @param tiposMime Array de tipos MIME
+     * @param tamaños Array de tamaños en bytes
+     * @return true si se guardó correctamente (incluyendo todas las imágenes)
+     */
+    public static boolean registrarIncidenciaConImagenes(
+            String usuario,
+            int numeroTicket,
+            String motivo,
+            String descripcion,
+            byte[][] imagenes,
+            String[] nombreArchivos,
+            String[] tiposMime,
+            long[] tamaños
+    ) {
+        Connection con = null;
+        try {
+            int idTecnico = obtenerIdTecnico(usuario);
+            int idTicket = obtenerIdTicket(numeroTicket, idTecnico);
+
+            if (idTicket == -1) {
+                Log.escribirLog("Error: Ticket " + numeroTicket + " no encontrado para usuario " + usuario);
+                return false;
+            }
+
+            // Desactivar auto-commit para transacción
+            con = ConexionBD.getConnection();
+            con.setAutoCommit(false);
+
+            // 1. Actualizar el estado del ticket
+            String sqlTicket = """
+                UPDATE Ticket SET estado = 'Cancelado', motivo = ?, descripcion = ?
+                WHERE id = ? AND id_tecnico = ?
+            """;
+
+            PreparedStatement psTicket = con.prepareStatement(sqlTicket);
+            psTicket.setString(1, motivo);
+            psTicket.setString(2, descripcion);
+            psTicket.setInt(3, idTicket);
+            psTicket.setInt(4, idTecnico);
+
+            if (psTicket.executeUpdate() != 1) {
+                con.rollback();
+                Log.escribirLog("Error: No se pudo actualizar el ticket " + numeroTicket);
+                return false;
+            }
+
+            // 2. Guardar imágenes si existen
+            if (imagenes != null && imagenes.length > 0) {
+                for (int i = 0; i < imagenes.length; i++) {
+                    if (!ImagenDAO.guardarImagen(
+                            idTicket,
+                            imagenes[i],
+                            nombreArchivos != null && i < nombreArchivos.length ? nombreArchivos[i] : "imagen_" + i,
+                            tiposMime != null && i < tiposMime.length ? tiposMime[i] : "image/jpeg",
+                            tamaños != null && i < tamaños.length ? tamaños[i] : imagenes[i].length,
+                            null
+                    )) {
+                        con.rollback();
+                        Log.escribirLog("Error: Falló al guardar imagen " + i + " para ticket " + numeroTicket);
+                        return false;
+                    }
+                }
+            }
+
+            // 3. Registrar en auditoría
+            String sqlAuditoria = """
+                INSERT INTO Auditoria_Ticket (id_ticket, id_tecnico, accion, descripcion)
+                VALUES (?, ?, ?, ?)
+            """;
+
+            PreparedStatement psAuditoria = con.prepareStatement(sqlAuditoria);
+            psAuditoria.setInt(1, idTicket);
+            psAuditoria.setInt(2, idTecnico);
+            psAuditoria.setString(3, "INCIDENCIA_REGISTRADA");
+            psAuditoria.setString(4, motivo + " - " + descripcion);
+            psAuditoria.executeUpdate();
+
+            // Confirmar transacción
+            con.commit();
+            Log.escribirLog("Incidencia registrada correctamente para ticket " + numeroTicket 
+                    + " con " + (imagenes != null ? imagenes.length : 0) + " imágenes");
+            return true;
+
+        } catch (SQLException e) {
+            try {
+                if (con != null) {
+                    con.rollback();
+                    Log.escribirLog("Transacción revertida por error: " + e.getMessage());
+                }
+            } catch (SQLException rollbackEx) {
+                Log.escribirLog("Error al revertir transacción: " + rollbackEx.getMessage());
+            }
+            Log.escribirLog("Error registrando incidencia con imágenes: " + e.getMessage());
+            return false;
+        } finally {
+            try {
+                if (con != null) {
+                    con.setAutoCommit(true);
+                }
+            } catch (SQLException e) {
+                Log.escribirLog("Error reseteando autoCommit: " + e.getMessage());
+            }
+        }
+    }
 }
