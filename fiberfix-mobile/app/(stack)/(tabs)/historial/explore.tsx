@@ -1,9 +1,12 @@
+import CustomAlert from "@/components/CustomAlert";
+import { ErrorAlert, ErrorMessage } from "@/components/ErrorAlert";
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useUser } from '@/context/UserContext';
 import { MOTIVOS_PREDEFINIDOS } from '@/types/motivo';
 import { useFocusEffect } from '@react-navigation/native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import TcpSocket from 'react-native-tcp-socket';
 
 // Tipo de dato mejorado
@@ -23,6 +26,8 @@ type Ticket = {
 
 export default function ExploreScreen() {
   const { userId } = useUser();
+  const params = useLocalSearchParams();
+  const router = useRouter();
   const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP;
   const SERVER_PORT = Number(process.env.EXPO_PUBLIC_SERVER_PORT);
 
@@ -42,31 +47,40 @@ export default function ExploreScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'Todos' | Ticket['estado']>('Todos');
   const [sortOrder, setSortOrder] = useState<'reciente' | 'antiguo'>('reciente');
+  const [activeTab, setActiveTab] = useState<'detalle' | 'otro'>('otro');
 
-  /*Filtrador de ticket*/
-  const filteredHistory = historyData.filter((ticket) => {
-    //Busca por numero de ticket, descripcion o direccion
-    const query = searchQuery.toLowerCase();
-    const matchesSearch = (
-      ticket.numero_ticket.toString().includes(query) ||
-      ticket.descripcion?.toLowerCase().includes(query) ||
-      ticket.direccion?.toLowerCase().includes(query)
-    );
-    const matchesStatus = statusFilter === 'Todos' || ticket.estado === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  }).sort((a, b) => {
-
-    //Ordena por fecha
-    const dateA = new Date(a.fecha_creacion).getTime();
-    const dateB = new Date(b.fecha_creacion).getTime();
-    return sortOrder === 'reciente' ? dateB - dateA : dateA - dateB;
+  // Estado para el CustomAlert
+  const [customAlertVisible, setCustomAlertVisible] = useState(false);
+  const [customAlertConfig, setCustomAlertConfig] = useState({
+    title: '',
+    message: '',
+    confirmText: '',
+    cancelText: '',
+    onConfirm: () => {},
   });
 
-  // Cargar historial al iniciar
-  useEffect(() => {
-    loadHistory();
-  }, []);
+  const [resumeTicketError, setResumeTicketError] = useState<ErrorMessage | null>(null);
+
+  /*Filtrador de ticket*/
+  const filteredHistory = historyData
+    .filter((ticket) => {
+      //Busca por numero de ticket, descripcion o direccion
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = (
+        ticket.numero_ticket.toString().includes(query) ||
+        ticket.descripcion?.toLowerCase().includes(query) ||
+        ticket.direccion?.toLowerCase().includes(query)
+      );
+      const matchesStatus = statusFilter === 'Todos' || ticket.estado === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      //Ordena por fecha
+      const dateA = new Date(a.fecha_creacion).getTime();
+      const dateB = new Date(b.fecha_creacion).getTime();
+      return sortOrder === 'reciente' ? dateB - dateA : dateA - dateB;
+    });
 
   // Recargar historial al enfocar pantalla
   useFocusEffect(
@@ -74,6 +88,19 @@ export default function ExploreScreen() {
       loadHistory();
     }, [])
   );
+
+  // Abrir detalle de ticket desde parámetro de navegación
+  useEffect(() => {
+    if (params.openTicket && historyData.length > 0) {
+      const ticketToOpen = historyData.find((t) => t.numero_ticket.toString() === params.openTicket);
+      if (ticketToOpen) {
+        openDetail(ticketToOpen);
+        // Limpiar el parámetro después de abrir el modal para evitar que se abra de nuevo
+        router.setParams({ openTicket: undefined });
+      }
+    }
+  }, [params.openTicket, historyData]);
+
   // Limpiar mensaje de estado
   useEffect(() => {
     if (statusMessage) {
@@ -177,91 +204,77 @@ export default function ExploreScreen() {
   const deleteTicket = () => {
     if (!selectedTicket) return;
 
-    const confirmMessage = selectedTicket.estado === 'Cancelado'
-      ? "¿Borrar este ticket que aún está sin completar?"
-      : "¿Estás seguro de que deseas borrar este ticket?";
+    setResumeTicketError({
+      type: "warning",
+      title: "Eliminar Ticket",
+      message: "¿Estás seguro de que deseas eliminar este ticket? Esta acción no se puede deshacer.",
+      action: {
+        label: "Eliminar",
+        onPress: () => {
+          const mensaje = `DELETE|${userId}|${selectedTicket.id}`;
 
-    Alert.alert(
-      "Eliminar Ticket",
-      confirmMessage,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: () => {
-            const mensaje = `DELETE|${userId}|${selectedTicket.id}`;
+          try {
+            const cliente = TcpSocket.createConnection({ host: SERVER_IP, port: SERVER_PORT }, () => {
+              cliente.write(mensaje + '\n');
+            });
 
-            try {
-              const cliente = TcpSocket.createConnection({ host: SERVER_IP, port: SERVER_PORT }, () => {
-                cliente.write(mensaje + '\n');
-              });
+            cliente.on('data', (data) => {
+              const response = data.toString().trim();
+              if (response === 'DELETE_OK') {
+                setStatusMessage({ text: "TICKET ELIMINADO", type: 'success' });
+                setSelectedTicket(null);
+                loadHistory();
+              } else if (response === 'DELETE_ERROR_TERMINADO') {
+                setResumeTicketError({
+                  type: "error",
+                  title: "No se puede borrar el ticket",
+                  message: "Este ticket está en estado 'Terminado' y no puede ser eliminado.",
+                  action: {
+                    label: "Entendido",
+                    onPress: () => setResumeTicketError(null),
+                  },
+                });
+              } else {
+                setStatusMessage({ text: "ERROR AL ELIMINAR", type: 'error' });
+              }
+              cliente.end();
+            });
 
-              cliente.on('data', (data) => {
-                const response = data.toString().trim();
-                if (response === 'DELETE_OK') {
-                  setStatusMessage({ text: "TICKET ELIMINADO", type: 'success' });
-                  setSelectedTicket(null);
-                  loadHistory();
-                } else {
-                  setStatusMessage({ text: "ERROR AL ELIMINAR", type: 'error' });
-                }
-                cliente.end();
-              });
-
-              cliente.on('error', () => {
-                setStatusMessage({ text: "ERROR DE ENVÍO", type: 'error' });
-              });
-            } catch (error) {
-              setStatusMessage({ text: "ERROR DE CONEXIÓN", type: 'error' });
-            }
+            cliente.on('error', () => {
+              setStatusMessage({ text: "ERROR DE ENVÍO", type: 'error' });
+            });
+          } catch (error) {
+            setStatusMessage({ text: "ERROR DE CONEXIÓN", type: 'error' });
           }
-        }
-      ]
-    );
+
+          setResumeTicketError(null);
+        },
+      },
+    });
   };
 
   // Reanudar ticket
   const resumeTicket = () => {
     if (!selectedTicket) return;
 
-    Alert.alert(
-      "Reanudar Ticket",
-      "¿Deseas reanudar este ticket para intentarlo de nuevo?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Reanudar",
-          onPress: () => {
-            const mensaje = `RESUME|${userId}|${selectedTicket.id}`;
-
-            try {
-              const cliente = TcpSocket.createConnection({ host: SERVER_IP, port: SERVER_PORT }, () => {
-                cliente.write(mensaje + '\n');
-              });
-
-              cliente.on('data', (data) => {
-                const response = data.toString().trim();
-                if (response === 'RESUME_OK') {
-                  setStatusMessage({ text: "TICKET REANUDADO", type: 'success' });
-                  setSelectedTicket(null);
-                  loadHistory();
-                } else {
-                  setStatusMessage({ text: "ERROR AL REANUDAR", type: 'error' });
-                }
-                cliente.end();
-              });
-
-              cliente.on('error', () => {
-                setStatusMessage({ text: "ERROR DE ENVÍO", type: 'error' });
-              });
-            } catch (error) {
-              setStatusMessage({ text: "ERROR DE CONEXIÓN", type: 'error' });
+    setResumeTicketError({
+      type: "info",
+      title: "Reanudar Ticket",
+      message: "¿Deseas reanudar este ticket para continuar trabajando?",
+      action: {
+        label: "Reanudar",
+        onPress: () => {
+          setSelectedTicket(null);
+          router.replace({
+            pathname: '/home',
+            params: { 
+              resumeTicket: selectedTicket.numero_ticket.toString()
             }
-          }
-        }
-      ]
-    );
+          });
+          setResumeTicketError(null);
+        },
+      },
+    });
   };
 
   // Obtener color según estado
@@ -277,12 +290,19 @@ export default function ExploreScreen() {
 
   const estadoColor = selectedTicket ? getEstadoColor(selectedTicket.estado) : { bg: 'bg-gray-50', icon: 'doc.text.fill', color: '#6B7280' };
 
+  // Define the function at the top level of the component
+  const handleSortOrderChange = (order: 'reciente' | 'antiguo') => {
+    setSortOrder(order);
+  };
+
   return (
     <View className="flex-1 bg-white">
 
       {/* BACKGROUND DECORATIVO */}
       <View className="absolute inset-0 flex-row flex-wrap opacity-5">
-        {[...Array(100)].map((_, i) => <View key={i} className="w-20 h-20 border border-gray-400" />)}
+        {[...Array(100)].map((_, i) => (
+          <View key={i} className="w-20 h-20 border border-gray-400" />
+        ))}
       </View>
 
       {/* CABECERA */}
@@ -355,21 +375,13 @@ export default function ExploreScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 24 }}
         >
-          {/*Todos los estados de los tiquets*/}
-          {/*Se mapean y se crean un boton*/}
           {(['Todos', 'Terminado', 'Cancelado', 'Pendiente', 'En Proceso'] as const).map((status) => (
             <TouchableOpacity
               key={status}
               onPress={() => setStatusFilter(status)}
-              className={`px-6 py-3 rounded-full mr-3 border ${statusFilter === status
-                ? 'bg-fiber-blue '
-                : 'bg-white '
-                }`}
+              className={`px-6 py-3 rounded-full mr-3 border ${statusFilter === status ? 'bg-fiber-blue' : 'bg-white'}`}
             >
-              <Text
-                className={`text-sm font-bold ${statusFilter === status ? 'text-white' : 'text-black'}`}>
-                {status === 'Todos' ? 'Todos' : status}
-              </Text>
+              <Text className={`text-sm font-bold ${statusFilter === status ? 'text-white' : 'text-black'}`}>{status}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -382,15 +394,13 @@ export default function ExploreScreen() {
           onPress={() => setSortOrder('reciente')}
           className={`flex-row items-center px-5 py-3 rounded-full border mr-2 ${sortOrder === 'reciente' ? 'bg-fiber-blue' : 'bg-gray-50'}`}
         >
-          <Text
-            className={` text-sm font-bold ${sortOrder === 'reciente' ? 'text-white' : 'text-black'}`}>Reciente</Text>
+          <Text className={`${sortOrder === 'reciente' ? 'text-white' : 'text-black'}`}>Reciente</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => setSortOrder('antiguo')}
-          className={`flex-row items-center  px-5 py-3 rounded-full border ${sortOrder === 'antiguo' ? 'bg-fiber-blue' : 'bg-gray-50'}`}
+          className={`flex-row items-center px-5 py-3 rounded-full border ${sortOrder === 'antiguo' ? 'bg-fiber-blue' : 'bg-gray-50'}`}
         >
-          <Text
-            className={`text-sm font-bold ${sortOrder === 'antiguo' ? 'text-white' : 'text-black'}`}>Antiguo</Text>
+          <Text className={`${sortOrder === 'antiguo' ? 'text-white' : 'text-black'}`}>Antiguo</Text>
         </TouchableOpacity>
       </View>
 
@@ -401,13 +411,13 @@ export default function ExploreScreen() {
         </View>
       ) : (
         <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
-          {historyData.length === 0 ? (
+          {filteredHistory.length === 0 ? (
             <View className="flex-1 justify-center items-center py-16">
               <IconSymbol name="doc.text" size={48} color="#CBD5E1" />
-              <Text className="text-gray-400 font-bold mt-4">No hay tickets registrados</Text>
+              <Text className="text-gray-400 font-bold mt-4">No hay tickets que coincidan con los filtros</Text>
             </View>
           ) : (
-            historyData.map((item) => {
+            filteredHistory.map((item) => {
               const color = getEstadoColor(item.estado);
               return (
                 <TouchableOpacity
@@ -586,7 +596,7 @@ export default function ExploreScreen() {
                       </Text>
                     </TouchableOpacity>
 
-                    {selectedTicket.estado === 'Cancelado' && (
+                    {(selectedTicket.estado === 'Cancelado' || selectedTicket.estado === 'Pendiente') && (
                       <TouchableOpacity
                         onPress={resumeTicket}
                         className="h-14 bg-green-500 rounded-2xl flex-row items-center justify-center"
@@ -637,6 +647,26 @@ export default function ExploreScreen() {
           </KeyboardAvoidingView>
         </View>
       )}
+
+      {/* Alerta personalizada */}
+      {customAlertVisible && (
+        <CustomAlert
+          title={customAlertConfig.title}
+          message={customAlertConfig.message}
+          confirmText={customAlertConfig.confirmText}
+          cancelText={customAlertConfig.cancelText}
+          onConfirm={() => {
+            customAlertConfig.onConfirm();
+            setCustomAlertVisible(false);
+          }}
+          onCancel={() => setCustomAlertVisible(false)}
+        />
+      )}
+
+      <ErrorAlert
+        error={resumeTicketError}
+        onDismiss={() => setResumeTicketError(null)}
+      />
     </View>
-  )
-}  
+  );
+}
