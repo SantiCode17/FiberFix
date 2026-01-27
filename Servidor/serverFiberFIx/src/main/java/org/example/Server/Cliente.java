@@ -1,8 +1,6 @@
 package org.example.Server;
 
-import org.example.DAO.PosicionDAO;
-import org.example.DAO.TecnicoDAO;
-import org.example.DAO.TicketDAO;
+import org.example.DAO.*;
 
 import java.io.*;
 import java.net.Socket;
@@ -25,6 +23,8 @@ public class Cliente implements Runnable {
                         new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
                 PrintWriter salida = new PrintWriter(
                         new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
+                InputStream inputStream = socket.getInputStream();
+                OutputStream outputStream = socket.getOutputStream();
         ) {
             String mensaje = entrada.readLine();
             if (mensaje == null) return;
@@ -47,8 +47,17 @@ public class Cliente implements Runnable {
                 case "INCIDENT":
                     manejarIncident(partes, salida);
                     break;
+                case "INCIDENT_WITH_IMAGES":
+                    manejarIncidentConImagenes(salida, inputStream);
+                    break;
                 case "HISTORY":
                     manejarHistory(partes, salida);
+                    break;
+                case "TICKET_DETAIL":
+                    manejarTicketDetail(partes, salida);
+                    break;
+                case "IMAGE_DATA":
+                    manejarImageData(partes, salida, outputStream);
                     break;
                 case "EDIT":
                     manejarEdit(partes, salida);
@@ -137,7 +146,182 @@ public class Cliente implements Runnable {
             salida.println(ok ? "INCIDENT_OK" : "INCIDENT_ERROR");
             System.out.println(ok ? "INCIDENT_OK" : "INCIDENT_ERROR");
         }catch (Exception e){
+            Log.escribirLog("Error en manejarIncident: " + e.getMessage());
             salida.println("INCIDENT_ERROR");
+        }
+    }
+
+    /**
+     * Maneja incidencias con imágenes
+     * Protocolo: INCIDENT_WITH_IMAGES|usuario|numeroTicket|motivo|descripcion|numImágenes
+     * Seguido de datos binarios de imágenes
+     */
+    public void manejarIncidentConImagenes(PrintWriter salida, InputStream entrada) {
+        try {
+            DataInputStream dis = new DataInputStream(entrada);
+            BufferedReader br = new BufferedReader(
+                    new InputStreamReader(entrada, StandardCharsets.UTF_8)
+            );
+
+            // Leer encabezado
+            String headerLine = br.readLine();
+            if (headerLine == null) {
+                salida.println("INCIDENT_WITH_IMAGES_ERROR");
+                return;
+            }
+
+            String[] partes = headerLine.split("\\|");
+            if (partes.length < 6) {
+                salida.println("INCIDENT_WITH_IMAGES_ERROR");
+                return;
+            }
+
+            String usuario = partes[1];
+            int numeroTicket = Integer.parseInt(partes[2]);
+            String motivo = partes[3];
+            String descripcion = partes[4];
+            int numImagenes = Integer.parseInt(partes[5]);
+
+            // Validar número de imágenes
+            if (numImagenes < 0 || numImagenes > 5) {
+                salida.println("INCIDENT_WITH_IMAGES_ERROR");
+                return;
+            }
+
+            byte[][] datosImagenes = new byte[numImagenes][];
+            String[] nombresArchivos = new String[numImagenes];
+            String[] tiposMime = new String[numImagenes];
+            long[] tamaños = new long[numImagenes];
+
+            // Leer datos de imágenes
+            for (int i = 0; i < numImagenes; i++) {
+                // Leer metadatos: nombreArchivo|tipoMime|tamaño
+                String metadataLine = br.readLine();
+                if (metadataLine == null) {
+                    salida.println("INCIDENT_WITH_IMAGES_ERROR");
+                    return;
+                }
+
+                String[] metadata = metadataLine.split("\\|");
+                if (metadata.length != 3) {
+                    salida.println("INCIDENT_WITH_IMAGES_ERROR");
+                    return;
+                }
+
+                nombresArchivos[i] = metadata[0];
+                tiposMime[i] = metadata[1];
+                long tamanoByte = Long.parseLong(metadata[2]);
+                tamaños[i] = tamanoByte;
+
+                // Validaciones
+                if (tamanoByte > 5 * 1024 * 1024) { // 5MB max
+                    Log.escribirLog("Imagen demasiado grande: " + tamanoByte + " bytes");
+                    salida.println("INCIDENT_WITH_IMAGES_ERROR");
+                    return;
+                }
+
+                if (!tiposMime[i].startsWith("image/")) {
+                    Log.escribirLog("Tipo MIME no permitido: " + tiposMime[i]);
+                    salida.println("INCIDENT_WITH_IMAGES_ERROR");
+                    return;
+                }
+
+                // Leer datos binarios
+                datosImagenes[i] = new byte[(int) tamanoByte];
+                int bytesLeidos = dis.read(datosImagenes[i], 0, (int) tamanoByte);
+                if (bytesLeidos != tamanoByte) {
+                    Log.escribirLog("Error leyendo imagen " + i + ": esperaba " + tamanoByte + ", leídos " + bytesLeidos);
+                    salida.println("INCIDENT_WITH_IMAGES_ERROR");
+                    return;
+                }
+            }
+
+            // Guardar incidencia con imágenes (con transacción)
+            boolean ok = TicketDAO.registrarIncidenciaConImagenes(
+                    usuario,
+                    numeroTicket,
+                    motivo,
+                    descripcion,
+                    datosImagenes,
+                    nombresArchivos,
+                    tiposMime,
+                    tamaños
+            );
+
+            if (ok) {
+                salida.println("INCIDENT_WITH_IMAGES_OK");
+                System.out.println("INCIDENT_WITH_IMAGES_OK");
+            } else {
+                salida.println("INCIDENT_WITH_IMAGES_ERROR");
+                System.out.println("INCIDENT_WITH_IMAGES_ERROR");
+            }
+
+        } catch (Exception e) {
+            Log.escribirLog("Error en manejarIncidentConImagenes: " + e.getMessage());
+            e.printStackTrace();
+            salida.println("INCIDENT_WITH_IMAGES_ERROR");
+        }
+    }
+
+    /**
+     * Obtener detalle de un ticket con imágenes
+     * Protocolo: TICKET_DETAIL|usuario|idTicket
+     */
+    public void manejarTicketDetail(String[] partes, PrintWriter salida) {
+        try {
+            if (partes.length != 3) {
+                salida.println("TICKET_DETAIL_ERROR");
+                return;
+            }
+
+            String usuario = partes[1];
+            int idTicket = Integer.parseInt(partes[2]);
+
+            String json = TicketDAO.obtenerDetalleTicket(usuario, idTicket);
+            if (json != null) {
+                salida.println(json);
+            } else {
+                salida.println("TICKET_DETAIL_ERROR");
+            }
+
+        } catch (Exception e) {
+            Log.escribirLog("Error en manejarTicketDetail: " + e.getMessage());
+            salida.println("TICKET_DETAIL_ERROR");
+        }
+    }
+
+    /**
+     * Obtener datos binarios de una imagen
+     * Protocolo: IMAGE_DATA|usuario|idImagen
+     * Respuesta: bytes de imagen o IMAGE_DATA_ERROR
+     */
+    public void manejarImageData(String[] partes, PrintWriter salida, OutputStream outputStream) {
+        try {
+            if (partes.length != 3) {
+                salida.println("IMAGE_DATA_ERROR");
+                return;
+            }
+
+            int idImagen = Integer.parseInt(partes[2]);
+            byte[] datos = ImagenDAO.obtenerDatosImagen(idImagen);
+
+            if (datos != null) {
+                // Enviar metadatos primero
+                String metadata = ImagenDAO.obtenerMetadatosImagen(idImagen);
+                salida.println(metadata);
+
+                // Luego enviar datos binarios
+                DataOutputStream dos = new DataOutputStream(outputStream);
+                dos.writeInt(datos.length);
+                dos.write(datos);
+                dos.flush();
+            } else {
+                salida.println("IMAGE_DATA_ERROR");
+            }
+
+        } catch (Exception e) {
+            Log.escribirLog("Error en manejarImageData: " + e.getMessage());
+            salida.println("IMAGE_DATA_ERROR");
         }
     }
 
