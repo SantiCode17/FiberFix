@@ -41,6 +41,7 @@ export default function TicketScreen() {
   const [incidentNote, setIncidentNote] = useState('');
   const [selectedImages, setSelectedImages] = useState<ImageAttachment[]>([]);
   const [existingTicketError, setExistingTicketError] = useState<ErrorMessage | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'Todos' | 'Pendiente' | 'En Proceso' | 'Terminado' | 'Cancelado'>('Todos');
 
   const {
     error,
@@ -224,7 +225,7 @@ const openIncidentModal = () => {
     return;
   }
 
-  setIncidentReason('');
+  setIncidentReason('Inaccesible'); // Motivo por defecto
   setCustomReason('');
   setIncidentNote('');
   setSelectedImages([]);
@@ -237,7 +238,7 @@ const submitIncident = async () => {
     return;
   }
 
-  let finalReason = incidentReason;
+  let finalReason = incidentReason; // Use the selected chip as the main reason
 
   if (incidentReason === 'Otros') {
     if (!customReason.trim()) {
@@ -514,7 +515,7 @@ return (
                 onPress={() => setShowIncidentModal(false)}
                 className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center"
               >
-                <IconSymbol name="xmark" size={24} color="#64748B" />
+                <IconSymbol name="close" size={24} color="#64748B" />
               </TouchableOpacity>
             </View>
 
@@ -527,50 +528,24 @@ return (
                 1. Motivo Principal
               </Text>
               <View className="flex-row flex-wrap gap-2 mb-8">
-                {QUICK_REASONS.map((reason) => (
+                {(['Inaccesible', 'Perro suelto', 'Sin repuestos', 'Factores ambientales', 'Otros'] as const).map((status) => (
                   <TouchableOpacity
-                    key={reason}
-                    onPress={() => {
-                      setIncidentReason(reason === incidentReason ? '' : reason);
-                      if (reason !== 'Otros') {
-                        setCustomReason('');
-                      }
-                    }}
-                    activeOpacity={0.7}
-                    className={`px-4 py-3 rounded-xl border ${incidentReason === reason ? 'bg-red-500 border-red-500 shadow-md' : 'bg-white border-gray-200'
-                      }`}
+                    key={status}
+                    onPress={() => setIncidentReason(status)}
+                    className={`px-6 py-3 rounded-full mr-3 border ${incidentReason === status ? 'bg-fiber-blue border-fiber-blue' : 'bg-white border-gray-200'}`}
                   >
-                    <Text className={`font-bold text-xs uppercase ${incidentReason === reason ? 'text-white' : 'text-gray-500'}`}>
-                      {reason}
-                    </Text>
+                    <Text className={`text-sm font-bold ${incidentReason === status ? 'text-white' : 'text-black'}`}>{status}</Text>
                   </TouchableOpacity>
                 ))}
-
-                <TouchableOpacity
-                  key="Otros"
-                  onPress={() => {
-                    setIncidentReason(incidentReason === 'Otros' ? '' : 'Otros');
-                    if (incidentReason !== 'Otros') {
-                      setCustomReason('');
-                    }
-                  }}
-                  activeOpacity={0.7}
-                  className={`px-4 py-3 rounded-xl border ${incidentReason === 'Otros' ? 'bg-purple-500 border-purple-500 shadow-md' : 'bg-white border-gray-200'
-                    }`}
-                >
-                  <Text className={`font-bold text-xs uppercase ${incidentReason === 'Otros' ? 'text-white' : 'text-gray-500'}`}>
-                    Otros
-                  </Text>
-                </TouchableOpacity>
               </View>
 
               {incidentReason === 'Otros' && (
-                <View className="mb-8 p-4 bg-purple-50 rounded-2xl border-2 border-purple-200">
+                <View className="mb-8 p-4 bg-orange-50 rounded-2xl border-2 border-orange-200">
                   <Text className="text-fiber-blue font-black text-xs uppercase mb-3">
                     Título Personalizado
                   </Text>
                   <TextInput
-                    className="bg-white rounded-2xl px-4 py-3 text-fiber-dark font-medium border-2 border-purple-200 text-base"
+                    className="bg-white rounded-2xl px-4 py-3 text-fiber-dark font-medium border-2 border-orange-200 text-base"
                     placeholder="Describe el tipo de incidencia..."
                     placeholderTextColor="#CBD5E1"
                     value={customReason}
@@ -605,14 +580,13 @@ return (
             <View className="absolute bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100">
               <TouchableOpacity
                 onPress={submitIncident}
-                disabled={(!incidentReason && !incidentNote) || sending}
-                className={`h-20 rounded-[25px] flex-row items-center justify-center border-b-4 ${(incidentReason || incidentNote) && !sending ? 'bg-red-600 border-red-800' : 'bg-gray-200 border-gray-300'
-                  }`}
+                disabled={!incidentReason || !incidentNote.trim() || sending}
+                className={`h-20 rounded-[25px] flex-row items-center justify-center border-b-4 ${incidentReason && incidentNote.trim() && !sending ? 'bg-red-600 border-red-800' : 'bg-gray-200 border-gray-300'}`}
               >
                 {sending ? (
                   <ActivityIndicator size="small" color="white" />
                 ) : (
-                  <Text className={`font-black text-xl uppercase tracking-tighter ${(incidentReason || incidentNote) ? 'text-white' : 'text-gray-400'}`}>
+                  <Text className={`font-black text-xl uppercase tracking-tighter ${incidentReason && incidentNote.trim() && !sending ? 'text-white' : 'text-gray-400'}`}>
                     Registrar Incidencia
                   </Text>
                 )}

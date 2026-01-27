@@ -352,7 +352,7 @@ export default function ExploreScreen() {
       {/* BUSCADOR */}
       <View className="px-6 mb-4">
         <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3">
-          <IconSymbol name="magnifyingglass" size={20} color="#94A3B8" />
+          <IconSymbol name="search" size={20} color="#94A3B8" />
           <TextInput
             placeholder="Buscar ticket"
             placeholderTextColor="#94A3B8"

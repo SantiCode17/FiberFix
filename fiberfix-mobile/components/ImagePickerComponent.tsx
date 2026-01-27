@@ -57,7 +57,7 @@ export const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({
         mediaTypes: ImagePickerLib.MediaTypeOptions.Images,
         allowsEditing: false,
         quality: 0.8,
-        allowsMultiple: true,
+        allowsMultipleSelection: true,
       });
 
       if (!result.canceled) {
@@ -173,7 +173,7 @@ export const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({
           }`}
         >
           <IconSymbol
-            name="photo.fill"
+            name="image"
             size={20}
             color={loading || selectedImages.length >= maxImages ? '#CBD5E1' : '#3B82F6'}
           />
@@ -199,7 +199,7 @@ export const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({
           }`}
         >
           <IconSymbol
-            name="camera.fill"
+            name="camera"
             size={20}
             color={loading || selectedImages.length >= maxImages ? '#CBD5E1' : '#F97316'}
           />
@@ -242,7 +242,7 @@ export const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="gap-4 -mx-2 px-2"
+            className="gap-4 -mx-2 px-2 pt-5"
           >
             {selectedImages.map((image, index) => (
               <View key={index} className="relative mr-4 mb-4">
@@ -254,7 +254,7 @@ export const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({
                   onPress={() => removeImage(index)}
                   className="absolute -top-2 -right-2 bg-red-500 rounded-full w-8 h-8 items-center justify-center shadow-md"
                 >
-                  <IconSymbol name="xmark" size={16} color="white" />
+                  <IconSymbol name="close" size={16} color="white" />
                 </TouchableOpacity>
                 <View className="absolute bottom-1 left-1 right-1 bg-black/60 rounded-lg p-1">
                   <Text className="text-white text-xs font-bold text-center truncate">

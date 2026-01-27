@@ -13,6 +13,7 @@ const MAPPING: Record<string, keyof typeof MaterialIcons.glyphMap> = {
   'archivebox.fill': 'inventory',
   'wifi': 'wifi',
   'wifi.off': 'wifi-off',
+  'search': 'search',
   
   // Seguridad y Login
   'eye.fill': 'visibility',
@@ -26,6 +27,8 @@ const MAPPING: Record<string, keyof typeof MaterialIcons.glyphMap> = {
 
   // UI General
   'calendar': 'today',
+  'image': 'image',
+  'camera': 'photo-camera',
   'person.fill': 'person',
   'tag.fill': 'label',
   'chevron.right': 'chevron-right',
