@@ -134,7 +134,6 @@ public class Ticket {
         this.dni = dni;
     }
 
-<<<<<<< HEAD
     public String getMotivo() {
         return motivo;
     }
@@ -150,7 +149,7 @@ public class Ticket {
     public void setFechaUltimaEdicion(LocalDateTime fechaUltimaEdicion) {
         this.fechaUltimaEdicion = fechaUltimaEdicion;
     }
-=======
+
     public void mostrar() {
         final String RESET = "\u001B[0m";
         final String AZUL = "\u001B[34m";
@@ -180,6 +179,4 @@ public class Ticket {
                         " | Cierre: " + cierre
         );
     }
-
->>>>>>> feature-Carlos-menu-server
 }

@@ -1,4 +1,5 @@
-CREATE schema FiberFix;
+DROP SCHEMA IF EXISTS FiberFix;
+CREATE SCHEMA FiberFix;
 USE FiberFix;
 
 CREATE TABLE Tecnico

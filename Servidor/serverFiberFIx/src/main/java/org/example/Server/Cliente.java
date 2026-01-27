@@ -18,14 +18,15 @@ public class Cliente implements Runnable {
 
     @Override
     public void run() {
+        PrintWriter salida = null;
         try (
                 BufferedReader entrada = new BufferedReader(
                         new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-                PrintWriter salida = new PrintWriter(
-                        new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
                 InputStream inputStream = socket.getInputStream();
                 OutputStream outputStream = socket.getOutputStream();
         ) {
+            salida = new PrintWriter(
+                    new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
             String mensaje = entrada.readLine();
             if (mensaje == null) return;
 
@@ -73,6 +74,9 @@ public class Cliente implements Runnable {
             }
         } catch (Exception e) {
             Log.escribirLog(e.getMessage());
+            if (salida != null) {
+                salida.println("SERVER_ERROR");
+            }
         } finally {
             try {
                 socket.close();
@@ -94,12 +98,16 @@ public class Cliente implements Runnable {
     }
 
     public void manejarStart (String[] partes, PrintWriter salida) {
-        try{
+        try {
+            Log.escribirLog("Procesando mensaje START: " + String.join("|", partes));
+
             String usuario = partes[1];
             int numTicket = Integer.parseInt(partes[2]);
             double lat = Double.parseDouble(partes[3]);
             double lon = Double.parseDouble(partes[4]);
             LocalDateTime fecha = LocalDateTime.parse(partes[5], DateTimeFormatter.ISO_DATE_TIME);
+
+            Log.escribirLog("Datos extraídos: usuario=" + usuario + ", numTicket=" + numTicket + ", lat=" + lat + ", lon=" + lon + ", fecha=" + fecha);
 
             int ok = TicketDAO.iniciarTicket(usuario, numTicket, fecha, lat, lon);
             String respuesta;
@@ -113,9 +121,12 @@ public class Cliente implements Runnable {
                 respuesta = "START_ERROR";
             }
 
-            salida.println(respuesta);
+            Log.escribirLog("Respuesta generada: " + respuesta);
             System.out.println(respuesta);
-        }catch (Exception e){
+            salida.println(respuesta);
+        } catch (Exception e) {
+            System.out.println("[START] EXCEPCIÓN");
+            Log.escribirLog("Error en manejarStart: " + e.getMessage());
             salida.println("START_ERROR");
         }
     }
@@ -328,13 +339,28 @@ public class Cliente implements Runnable {
     public void manejarHistory(String[] partes, PrintWriter salida){
         if (partes.length != 2) {
             salida.println("HISTORY_ERROR");
+            System.out.println("HISTORY_ERROR");
             return;
         }
 
         String usuario = partes[1];
 
-        String json = TicketDAO.obtenerHistorial(usuario);
-        salida.println(json);
+        try {
+            String json = TicketDAO.obtenerHistorial(usuario);
+
+            // Si hay respuesta (aunque sea "[]"), lo consideramos OK.
+            if (json != null) {
+                salida.println(json);
+                System.out.println("HISTORY_OK");
+            } else {
+                salida.println("HISTORY_ERROR");
+                System.out.println("HISTORY_ERROR");
+            }
+        } catch (Exception e) {
+            Log.escribirLog("Error en manejarHistory: " + e.getMessage());
+            salida.println("HISTORY_ERROR");
+            System.out.println("HISTORY_ERROR");
+        }
     }
 
     /**
@@ -376,15 +402,25 @@ public class Cliente implements Runnable {
 
             String usuario = partes[1];
             int idTicket = Integer.parseInt(partes[2]);
+            int code = TicketDAO.marcarComoBorrado(usuario, idTicket);
 
-            boolean ok = TicketDAO.marcarComoBorrado(usuario, idTicket);
-            salida.println(ok ? "DELETE_OK" : "DELETE_ERROR");
-            System.out.println(ok ? "DELETE_OK" : "DELETE_ERROR");
+            String respuesta;
+            if (code == 1) {
+                respuesta = "DELETE_OK";
+            } else if (code == 2) {
+                respuesta = "DELETE_ERROR_TERMINADO";
+            } else {
+                respuesta = "DELETE_ERROR";
+            }
+
+            salida.println(respuesta);
+            System.out.println(respuesta);
 
         }catch (Exception e){
             Log.escribirLog("Error en manejarDelete: " + e.getMessage());
             salida.println("DELETE_ERROR");
         }
+
     }
 
     /**
