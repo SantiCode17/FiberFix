@@ -29,7 +29,7 @@ public class Cliente implements Runnable {
             String mensaje = entrada.readLine();
             if (mensaje == null) return;
 
-            System.out.println("Cliente dice: " + mensaje);
+            System.out.println(Thread.currentThread().getName()+" dice: " + mensaje);
 
             String[] partes = mensaje.split("\\|");
             String accion = partes[0];
