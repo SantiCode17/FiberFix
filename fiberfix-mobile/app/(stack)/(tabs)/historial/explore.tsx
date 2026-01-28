@@ -1,8 +1,9 @@
 import CustomAlert from "@/components/CustomAlert";
 import { ErrorAlert, ErrorMessage } from "@/components/ErrorAlert";
+import { ImagePickerComponent } from "@/components/ImagePickerComponent";
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useUser } from '@/context/UserContext';
-import { MOTIVOS_PREDEFINIDOS } from '@/types/motivo';
+import { MOTIVOS_CON_OTROS, MOTIVOS_PREDEFINIDOS } from '@/types/motivo';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -25,6 +26,7 @@ type Ticket = {
 };
 
 export default function ExploreScreen() {
+  const [showBubble, setShowBubble] = useState(false);
   const { userId } = useUser();
   const params = useLocalSearchParams();
   const router = useRouter();
@@ -56,7 +58,7 @@ export default function ExploreScreen() {
     message: '',
     confirmText: '',
     cancelText: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const [resumeTicketError, setResumeTicketError] = useState<ErrorMessage | null>(null);
@@ -267,7 +269,7 @@ export default function ExploreScreen() {
           setSelectedTicket(null);
           router.replace({
             pathname: '/home',
-            params: { 
+            params: {
               resumeTicket: selectedTicket.numero_ticket.toString()
             }
           });
@@ -504,13 +506,13 @@ export default function ExploreScreen() {
 
                 {/* MOTIVO */}
                 <Text className="text-gray-400 font-bold text-xs uppercase mb-3">
-                  1. Motivo / Título
+                  1. Motivo / Título *
                 </Text>
 
                 {isEditing ? (
                   <>
                     <View className="flex-row flex-wrap gap-2 mb-4">
-                      {MOTIVOS_PREDEFINIDOS.map((motivo) => (
+                      {MOTIVOS_CON_OTROS.map((motivo) => (
                         <TouchableOpacity
                           key={motivo}
                           onPress={() => {
@@ -523,7 +525,7 @@ export default function ExploreScreen() {
                             }`}
                         >
                           <Text
-                            className={`font-bold text-xs ${editMotivo === motivo ? 'text-white' : 'text-gray-600'
+                            className={`font-bold text-md ${editMotivo === motivo ? 'text-white' : 'text-gray-600'
                               }`}
                           >
                             {motivo}
@@ -533,12 +535,19 @@ export default function ExploreScreen() {
                     </View>
 
                     {editMotivo === 'Otros' && (
-                      <TextInput
-                        value={editCustomMotivo}
-                        onChangeText={setEditCustomMotivo}
-                        placeholder="Especifica el motivo..."
-                        className="bg-purple-50 p-4 rounded-xl text-base font-bold text-fiber-dark border border-purple-200 mb-6"
-                      />
+                      <View className="mb-8 p-4 bg-orange-50 rounded-2xl border-2 border-orange-200">
+                        <Text className="text-fiber-blue font-black text-xs uppercase mb-3">
+                          Añade un motivo
+                        </Text>
+
+                        <TextInput
+                          value={editCustomMotivo}
+                          onChangeText={setEditCustomMotivo}
+                          placeholder="Especifica el motivo..."
+                          placeholderTextColor="#aebdcfff"
+                          className="bg-white rounded-2xl px-4 py-3 text-fiber-dark font-medium border-2 border-orange-200 text-base"
+                        />
+                      </View>
                     )}
                   </>
                 ) : (
@@ -549,7 +558,7 @@ export default function ExploreScreen() {
 
                 {/* DESCRIPCIÓN */}
                 <Text className="text-gray-400 font-bold text-xs uppercase mb-3">
-                  2. Descripción
+                  2. Descripción *
                 </Text>
 
                 {isEditing ? (
@@ -557,12 +566,13 @@ export default function ExploreScreen() {
                     value={editDescripcion}
                     onChangeText={setEditDescripcion}
                     multiline
-                    className="bg-gray-50 p-4 rounded-xl text-base font-medium text-fiber-dark border border-gray-200 h-40 mb-6"
+                    className="bg-gray-50 px-3 rounded-xl text-base font-medium text-black border border-gray-200 h-20 mb-6"
                     placeholder="Escribe la descripción..."
+                    placeholderTextColor="#aebdcfff"
                   />
                 ) : (
-                  <View className="bg-gray-50 p-6 rounded-3xl mb-6">
-                    <Text className="text-fiber-dark text-lg font-medium leading-6">
+                  <View className="bg-gray-50 px-4 py-3 rb mb-6">
+                    <Text className="text-black text-lg font-medium leading-6">
                       {selectedTicket.descripcion || 'Sin descripción'}
                     </Text>
                   </View>
@@ -572,13 +582,20 @@ export default function ExploreScreen() {
                 <Text className="text-gray-400 font-bold text-xs uppercase mb-3">
                   3. Evidencia visual
                 </Text>
-
-                <View className="border-2 border-dashed border-gray-200 rounded-3xl h-40 items-center justify-center bg-gray-50 mb-8">
-                  <IconSymbol name="archivebox.fill" size={40} color="#CBD5E1" />
-                  <Text className="text-gray-400 font-bold mt-2 uppercase text-xs">
-                    Sin imágenes
-                  </Text>
-                </View>
+                {isEditing ? (
+                  <ImagePickerComponent
+                    onImagesSelected={() => { }}
+                    maxImages={5}
+                    maxSizePerImage={5 * 1024 * 1024}
+                  />
+                ) : (
+                  <View className="border-2 border-dashed border-gray-200 rounded-3xl h-40 items-center justify-center bg-gray-50 mb-8">
+                    <IconSymbol name="archivebox.fill" size={40} color="#CBD5E1" />
+                    <Text className="text-gray-400 font-bold mt-2 uppercase text-xs">
+                      Sin imágenes
+                    </Text>
+                  </View>
+                )}
 
               </ScrollView>
 
@@ -621,14 +638,27 @@ export default function ExploreScreen() {
                 ) : (
                   <View className="gap-3">
                     <TouchableOpacity
-                      onPress={saveChanges}
-                      className="h-14 bg-green-500 rounded-2xl flex-row items-center justify-center"
+                      onPress={() => {
+                        if (editMotivo && editDescripcion.trim()) {
+                          saveChanges();
+                        } else {
+                          setShowBubble(true);
+                          setTimeout(() => setShowBubble(false), 2500);
+                        }
+                      }}
+                      className={`h-14 rounded-2xl flex-row items-center justify-center ${editMotivo && editDescripcion.trim() ? 'bg-green-500' : 'bg-gray-300'}`}
                     >
-                      <IconSymbol name="checkmark.circle.fill" size={20} color="white" />
-                      <Text className="text-white font-black ml-2 uppercase">
+                      <IconSymbol name="checkmark.circle.fill" size={20} color={editMotivo && editDescripcion.trim() ? 'white' : '#6B7280'} />
+                      <Text className={`font-black ml-2 uppercase ${editMotivo && editDescripcion.trim() ? 'text-white' : 'text-gray-500'}`}>
                         Guardar Cambios
                       </Text>
                     </TouchableOpacity>
+                    {showBubble && (
+                      <View className="absolute left-0 right-0 bottom-40 mx-6 px-4 py-3 bg-red-100 border border-red-300 rounded-2xl flex-row items-center justify-center z-50">
+                        <IconSymbol name="exclamationmark.triangle.fill" size={18} color="#DC2626" />
+                        <Text className="ml-2 text-red-700 font-bold text-sm">Debes rellenar todos los campos obligatorios</Text>
+                      </View>
+                    )}
 
                     <TouchableOpacity
                       onPress={() => setIsEditing(false)}
