@@ -625,15 +625,17 @@ export default function ExploreScreen() {
                       </TouchableOpacity>
                     )}
 
-                    <TouchableOpacity
-                      onPress={deleteTicket}
-                      className="h-14 bg-red-600 rounded-2xl flex-row items-center justify-center"
-                    >
-                      <IconSymbol name="trash" size={20} color="white" />
-                      <Text className="text-white font-black ml-2 uppercase">
-                        Eliminar Ticket
-                      </Text>
-                    </TouchableOpacity>
+                    {selectedTicket.estado !== 'Terminado' && (
+                      <TouchableOpacity
+                        onPress={deleteTicket}
+                        className="h-14 bg-red-600 rounded-2xl flex-row items-center justify-center"
+                      >
+                        <IconSymbol name="trash" size={20} color="white" />
+                        <Text className="text-white font-black ml-2 uppercase">
+                          Eliminar Ticket
+                        </Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 ) : (
                   <View className="gap-3">
