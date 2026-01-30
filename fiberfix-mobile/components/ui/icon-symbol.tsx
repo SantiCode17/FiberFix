@@ -1,5 +1,5 @@
-import React from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import React from 'react';
 import { StyleProp, TextStyle } from 'react-native';
 
 const MAPPING: Record<string, keyof typeof MaterialIcons.glyphMap> = {
@@ -28,6 +28,7 @@ const MAPPING: Record<string, keyof typeof MaterialIcons.glyphMap> = {
   // UI General
   'calendar': 'today',
   'image': 'image',
+    'chevron.left': 'chevron-left',
   'camera': 'photo-camera',
   'person.fill': 'person',
   'tag.fill': 'label',
@@ -36,9 +37,11 @@ const MAPPING: Record<string, keyof typeof MaterialIcons.glyphMap> = {
   'location.fill': 'place',
   
   // Acciones (Sprint 3)
+    'photo.stack': 'photo-library',
   'pencil': 'edit',
   'trash': 'delete',
   'save': 'save',
+    'arrow.down.circle': 'cached',
 };
 
 export function IconSymbol({

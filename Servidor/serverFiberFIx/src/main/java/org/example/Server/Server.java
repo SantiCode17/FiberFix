@@ -14,6 +14,12 @@ import java.util.Scanner;
 public class Server {
 
     public static void main(String[] args) {
+        // Si se pasa "server" como argumento, iniciar el servidor directamente
+        if (args.length > 0 && args[0].equals("server")) {
+            servidor();
+            return;
+        }
+        
         Scanner sc = new Scanner(System.in);
         String opcion = "0";
         while (!opcion.equals("3")){

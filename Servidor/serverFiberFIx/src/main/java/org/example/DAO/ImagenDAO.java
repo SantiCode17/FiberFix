@@ -49,7 +49,7 @@ public class ImagenDAO {
 
             String sql = """
                 INSERT INTO Imagen_Ticket 
-                (id_ticket, datos_imagen, nombre_archivo, tipo_mime, tamaño_bytes, descripcion)
+                (id_ticket, datos_imagen, nombre_archivo, tipo_mime, tamano_bytes, descripcion)
                 VALUES (?, ?, ?, ?, ?, ?)
             """;
 
@@ -86,17 +86,20 @@ public class ImagenDAO {
         json.append("[");
 
         String sql = """
-            SELECT id, nombre_archivo, tipo_mime, tamaño_bytes, descripcion, fecha_carga
+            SELECT id, nombre_archivo, tipo_mime, tamano_bytes, descripcion, fecha_carga
             FROM Imagen_Ticket
             WHERE id_ticket = ?
             ORDER BY fecha_carga DESC
         """;
 
-        try (Connection con = ConexionBD.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        PreparedStatement ps = null;
+        ResultSet rs = null;
 
+        try {
+            Connection con = ConexionBD.getConnection();
+            ps = con.prepareStatement(sql);
             ps.setInt(1, idTicket);
-            ResultSet rs = ps.executeQuery();
+            rs = ps.executeQuery();
 
             boolean primero = true;
             while (rs.next()) {
@@ -104,17 +107,17 @@ public class ImagenDAO {
                 primero = false;
 
                 json.append("{")
-                        .append("\"id\":").append(rs.getInt("id")).append(",")
-                        .append("\"nombre\":\"").append(rs.getString("nombre_archivo")).append("\",")
-                        .append("\"tipo\":\"").append(rs.getString("tipo_mime")).append("\",")
-                        .append("\"tamaño\":").append(rs.getLong("tamaño_bytes")).append(",")
-                        .append("\"descripcion\":").append(
-                                rs.getString("descripcion") == null || rs.getString("descripcion").isEmpty()
-                                        ? "null"
-                                        : "\"" + rs.getString("descripcion") + "\""
-                        ).append(",")
-                        .append("\"fecha\":\"").append(rs.getString("fecha_carga")).append("\"")
-                        .append("}");
+                    .append("\"id\":").append(rs.getInt("id")).append(",")
+                    .append("\"nombre\":\"").append(rs.getString("nombre_archivo")).append("\",")
+                    .append("\"tipo\":\"").append(rs.getString("tipo_mime")).append("\",")
+                    .append("\"tamaño\":").append(rs.getLong("tamano_bytes")).append(",")
+                    .append("\"descripcion\":").append(
+                        rs.getString("descripcion") == null || rs.getString("descripcion").isEmpty()
+                            ? "null"
+                            : "\"" + rs.getString("descripcion") + "\""
+                    ).append(",")
+                    .append("\"fecha\":\"").append(rs.getString("fecha_carga")).append("\"")
+                    .append("}");
             }
 
             json.append("]");
@@ -123,6 +126,14 @@ public class ImagenDAO {
         } catch (SQLException e) {
             Log.escribirLog("Error obteniendo imágenes del ticket " + idTicket + ": " + e.getMessage());
             return "[]";
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+                // NO cerrar la conexión aquí porque es compartida
+            } catch (SQLException e) {
+                Log.escribirLog("Error cerrando recursos de ImagenDAO: " + e.getMessage());
+            }
         }
     }
 
@@ -159,7 +170,7 @@ public class ImagenDAO {
      */
     public static String obtenerMetadatosImagen(int idImagen) {
         String sql = """
-            SELECT id, id_ticket, nombre_archivo, tipo_mime, tamaño_bytes, descripcion, fecha_carga
+            SELECT id, id_ticket, nombre_archivo, tipo_mime, tamano_bytes, descripcion, fecha_carga
             FROM Imagen_Ticket
             WHERE id = ?
         """;
@@ -172,14 +183,14 @@ public class ImagenDAO {
 
             if (rs.next()) {
                 return "{" +
-                        "\"id\":" + rs.getInt("id") + "," +
-                        "\"id_ticket\":" + rs.getInt("id_ticket") + "," +
-                        "\"nombre\":\"" + rs.getString("nombre_archivo") + "\"," +
-                        "\"tipo\":\"" + rs.getString("tipo_mime") + "\"," +
-                        "\"tamaño\":" + rs.getLong("tamaño_bytes") + "," +
-                        "\"descripcion\":" + (rs.getString("descripcion") == null ? "null" : "\"" + rs.getString("descripcion") + "\"") + "," +
-                        "\"fecha\":\"" + rs.getString("fecha_carga") + "\"" +
-                        "}";
+                    "\"id\":" + rs.getInt("id") + "," +
+                    "\"id_ticket\":" + rs.getInt("id_ticket") + "," +
+                    "\"nombre\":\"" + rs.getString("nombre_archivo") + "\"," +
+                    "\"tipo\":\"" + rs.getString("tipo_mime") + "\"," +
+                    "\"tamaño\":" + rs.getLong("tamano_bytes") + "," +
+                    "\"descripcion\":" + (rs.getString("descripcion") == null ? "null" : "\"" + rs.getString("descripcion") + "\"") + "," +
+                    "\"fecha\":\"" + rs.getString("fecha_carga") + "\"" +
+                    "}";
             }
 
         } catch (SQLException e) {

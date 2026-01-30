@@ -11,15 +11,6 @@ CREATE TABLE Tecnico
     apellido    VARCHAR(50)  NOT NULL
 );
 
-CREATE TABLE Cliente
-(
-    dni                   VARCHAR(9) PRIMARY KEY,
-    nombre                VARCHAR(50)  NOT NULL,
-    apellido              VARCHAR(50)  NOT NULL,
-    direccion_instalacion VARCHAR(100) NOT NULL,
-    telefono              VARCHAR(15)  NOT NULL
-);
-
 CREATE TABLE Ticket
 (
     id              INT PRIMARY KEY AUTO_INCREMENT,
@@ -37,13 +28,9 @@ CREATE TABLE Ticket
     fecha_cierre    DATETIME    NULL,
     /*Fecha de última edición (para auditoría)*/
     fecha_ultima_edicion DATETIME NULL,
-    /*Imagen adjunta - LONGBLOB para almacenar datos binarios*/
-    imagen          LONGBLOB    NULL,
     id_tecnico      INT NOT NULL,
-    dni_cliente     VARCHAR(9),
 
     FOREIGN KEY (id_tecnico) REFERENCES Tecnico (id),
-    FOREIGN KEY (dni_cliente) REFERENCES Cliente (dni),
     UNIQUE (numero_ticket, id_tecnico)
 );
 
@@ -73,7 +60,7 @@ CREATE TABLE Imagen_Ticket
     /*Tipo MIME (image/jpeg, image/png, etc)*/
     tipo_mime       VARCHAR(50) NOT NULL DEFAULT 'image/jpeg',
     /*Tamaño en bytes*/
-    tamaño_bytes    INT NOT NULL,
+    tamano_bytes    INT NOT NULL,
     /*Fecha de carga*/
     fecha_carga     DATETIME DEFAULT CURRENT_TIMESTAMP,
     /*Descripción opcional de la imagen*/
