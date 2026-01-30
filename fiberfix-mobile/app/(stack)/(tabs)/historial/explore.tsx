@@ -1,16 +1,28 @@
 import CustomAlert from "@/components/CustomAlert";
 import { ErrorAlert, ErrorMessage } from "@/components/ErrorAlert";
+import { ImageGallery } from "@/components/ImageGallery";
 import { ImagePickerComponent } from "@/components/ImagePickerComponent";
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useUser } from '@/context/UserContext';
-import { MOTIVOS_CON_OTROS, MOTIVOS_PREDEFINIDOS } from '@/types/motivo';
+import { useKeepAwakeOnScreen } from '@/hooks/useKeepAwakeOnScreen';
+import { MOTIVOS_CON_OTROS } from '@/types/motivo';
 import { useFocusEffect } from '@react-navigation/native';
+import * as FileSystem from 'expo-file-system/legacy';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import TcpSocket from 'react-native-tcp-socket';
 
 // Tipo de dato mejorado
+type ImageMetadata = {
+  id: number;
+  nombre: string;
+  tipo: string;
+  tamaño: number;
+  descripcion?: string | null;
+  fecha: string;
+};
+
 type Ticket = {
   id: number;
   numero_ticket: number;
@@ -23,9 +35,11 @@ type Ticket = {
   direccion?: string;
   latitud?: number;
   longitud?: number;
+  imagenes?: ImageMetadata[];
 };
 
 export default function ExploreScreen() {
+  useKeepAwakeOnScreen();
   const [showBubble, setShowBubble] = useState(false);
   const { userId } = useUser();
   const params = useLocalSearchParams();
@@ -44,6 +58,8 @@ export default function ExploreScreen() {
   const [editMotivo, setEditMotivo] = useState('');
   const [editDescripcion, setEditDescripcion] = useState('');
   const [editCustomMotivo, setEditCustomMotivo] = useState('');
+  // Nuevas imágenes seleccionadas durante la edición (no las ya asociadas en el servidor)
+  const [editNewImages, setEditNewImages] = useState<{ uri: string; name: string; size: number; type: string }[]>([]);
 
   // Campos de buscador y fitlrado
   const [searchQuery, setSearchQuery] = useState('');
@@ -151,6 +167,102 @@ export default function ExploreScreen() {
     }
   };
 
+  // Enviar imágenes nuevas y asociarlas al ticket existente usando protocolo INCIDENT_WITH_IMAGES
+  const sendImagesToTicket = (numeroTicket: number, images: { uri: string; name: string; size: number; type: string }[]) => {
+    return new Promise<void>(async (resolve, reject) => {
+      try {
+        // Preparar imágenes como base64
+        const imagenData: { name: string; type: string; size: number; base64: string }[] = [];
+        for (const img of images) {
+          const base64 = await (FileSystem as any).readAsStringAsync(img.uri, { encoding: 'base64' });
+          imagenData.push({ name: img.name, type: img.type, size: img.size, base64 });
+        }
+
+        let writeCompleted = false;
+
+        const cliente = TcpSocket.createConnection({ host: SERVER_IP, port: SERVER_PORT }, async () => {
+          try {
+            // Construir payload usando nuevas líneas simples (coincide con sendIncidentWithImages)
+            let payload = '';
+            payload += `INCIDENT_WITH_IMAGES|${userId}|${numeroTicket}|EDIT_ADD_IMAGES|Añadiendo imágenes|${imagenData.length}\n`;
+
+            for (const img of imagenData) {
+              payload += `${img.name}|${img.type}|${img.size}\n`;
+              payload += `${img.base64}\n`;
+            }
+
+            // Helper para escribir esperando al callback (evita cerrar antes de que se drene)
+            const writeAsync = (data: string, timeoutMs = 120000) => new Promise<void>((res, rej) => {
+              let finished = false;
+              const timer = setTimeout(() => {
+                if (finished) return;
+                finished = true;
+                rej(new Error('Timeout al escribir en socket'));
+              }, timeoutMs);
+
+              try {
+                cliente.write(data, undefined, () => {
+                  if (finished) return;
+                  finished = true;
+                  clearTimeout(timer);
+                  res();
+                });
+              } catch (e) {
+                if (finished) return;
+                finished = true;
+                clearTimeout(timer);
+                rej(e as Error);
+              }
+            });
+
+            // Enviar y esperar a que la escritura se complete antes de procesar la respuesta
+            await writeAsync(payload, 120000);
+            // marcar que todo se envió para poder procesar la respuesta
+            // (no cerramos el socket aquí; lo hará el handler de 'data')
+            writeCompleted = true;
+          } catch (err) {
+            cliente.destroy();
+            reject(err);
+          }
+        });
+
+        let responseReceived = false;
+        const timeout = setTimeout(() => {
+          if (!responseReceived) {
+            try { cliente.destroy(); } catch (e) {}
+            reject(new Error('Timeout al subir imágenes'));
+          }
+        }, 60000);
+
+        // Ignorar respuestas hasta que la escritura haya finalizado.
+        // Usamos la bandera `writeCompleted` declarada arriba para saber si la escritura ya terminó.
+        // Establecer un listener para 'close' y 'end' para limpiar tiempo si el servidor cierra sin responder
+        cliente.on('close', () => {
+          // no hacer nada aquí; si no recibimos respuesta será tratado por el timeout
+        });
+
+        cliente.on('data', (data) => {
+          if (!writeCompleted) return; // esperar a que la escritura complete
+          responseReceived = true;
+          clearTimeout(timeout);
+          const resp = data.toString().trim();
+          console.log('[sendImagesToTicket] respuesta servidor:', resp);
+          try { cliente.end(); } catch (e) {}
+          if (resp && resp.includes('OK')) resolve();
+          else reject(new Error('Respuesta inesperada: ' + resp));
+        });
+
+        cliente.on('error', (err) => {
+          clearTimeout(timeout);
+          cliente.destroy();
+          reject(err);
+        });
+      } catch (err) {
+        reject(err);
+      }
+    });
+  };
+
   // Abrir detalle del ticket
   const openDetail = (ticket: Ticket) => {
     setSelectedTicket(ticket);
@@ -181,15 +293,24 @@ export default function ExploreScreen() {
         cliente.write(mensaje + '\n');
       });
 
-      cliente.on('data', (data) => {
+      cliente.on('data', async (data) => {
         const response = data.toString().trim();
         if (response === 'EDIT_OK') {
-          setStatusMessage({ text: "TICKET ACTUALIZADO", type: 'success' });
-          setIsEditing(false);
-          setSelectedTicket(null);
-          loadHistory(); // Recargar historial
+          try {
+            if (editNewImages.length > 0 && selectedTicket) {
+              setStatusMessage({ text: 'Subiendo imágenes...', type: 'warning' });
+              await sendImagesToTicket(selectedTicket.numero_ticket, editNewImages);
+              setEditNewImages([]);
+            }
+            setStatusMessage({ text: 'TICKET ACTUALIZADO', type: 'success' });
+            setIsEditing(false);
+            setSelectedTicket(null);
+            loadHistory();
+          } catch (err) {
+            setStatusMessage({ text: 'ERROR AL SUBIR IMÁGENES', type: 'error' });
+          }
         } else {
-          setStatusMessage({ text: "ERROR AL EDITAR TICKET", type: 'error' });
+          setStatusMessage({ text: 'ERROR AL EDITAR TICKET', type: 'error' });
         }
         cliente.end();
       });
@@ -295,6 +416,127 @@ export default function ExploreScreen() {
   // Define the function at the top level of the component
   const handleSortOrderChange = (order: 'reciente' | 'antiguo') => {
     setSortOrder(order);
+  };
+
+  /**
+   * Descarga una imagen específica del servidor
+   * Usa el protocolo IMAGE_DATA|usuario|idImagen
+   * Retorna una Data URI que puede ser usada directamente en Image
+   */
+  const downloadImage = async (imageId: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!TcpSocket) {
+        reject(new Error('Socket TCP no disponible'));
+        return;
+      }
+
+      try {
+        const cliente = TcpSocket.createConnection(
+          { host: SERVER_IP, port: SERVER_PORT },
+          () => {
+            cliente.write(`IMAGE_DATA|${userId}|${imageId}\n`);
+          }
+        );
+
+        let metadataReceived = false;
+        const dataChunks: string[] = [];
+        let totalData = '';
+
+        const timeout = setTimeout(() => {
+          cliente.end();
+          reject(new Error('Timeout descargando imagen'));
+        }, 30000);
+
+        cliente.on('data', (data: any) => {
+          try {
+            const dataStr = typeof data === 'string' ? data : data.toString('utf8');
+            totalData += dataStr;
+            
+            // Intentar separar metadatos y datos base64
+            if (!metadataReceived) {
+              const lines = totalData.split('\n');
+              
+              if (lines.length >= 1) {
+                try {
+                  // Intenta parsear la primera línea como JSON
+                  const firstLine = lines[0].trim();
+                  if (firstLine.startsWith('{')) {
+                    JSON.parse(firstLine);
+                    metadataReceived = true;
+                    
+                    // Si hay más líneas, la segunda es el base64
+                    if (lines.length >= 2) {
+                      const base64Str = lines[1].trim();
+                      if (base64Str && !base64Str.includes('ERROR')) {
+                        dataChunks.push(base64Str);
+                      }
+                    }
+                  }
+                } catch (e) {
+                  // Aún no tenemos JSON válido completo
+                }
+              }
+            } else {
+              // Ya recibimos metadatos, acumular base64
+              const lines = totalData.split('\n');
+              if (lines.length >= 2) {
+                const base64Str = lines[1].trim();
+                if (base64Str) {
+                  dataChunks.push(base64Str);
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error procesando datos:', error);
+          }
+        });
+
+        cliente.on('close', () => {
+          clearTimeout(timeout);
+
+          if (totalData && totalData.length > 0) {
+            try {
+              const lines = totalData.split('\n').map((l) => l.trim()).filter(Boolean);
+
+              // Si la primera línea es JSON, la segunda suele ser el base64
+              let base64 = '';
+              if (lines.length >= 2 && lines[0].startsWith('{')) {
+                base64 = lines[1];
+              } else {
+                // Intentar extraer un token base64 largo en cualquier parte del payload
+                const match = totalData.match(/[A-Za-z0-9+/=]{100,}/);
+                if (match) base64 = match[0];
+                else if (lines.length >= 1) base64 = lines[0];
+              }
+
+              if (base64 && !base64.includes('ERROR')) {
+                const dataUri = `data:image/jpeg;base64,${base64}`;
+                resolve(dataUri);
+              } else {
+                // Fallback: si hay contenido no-error, usarlo tal cual
+                const cleaned = totalData.trim();
+                if (cleaned && !cleaned.includes('ERROR')) {
+                  resolve(`data:image/jpeg;base64,${cleaned}`);
+                } else {
+                  reject(new Error('No se recibieron datos válidos de imagen'));
+                }
+              }
+            } catch (error) {
+              reject(new Error('Error procesando respuesta'));
+            }
+          } else {
+            reject(new Error('No se recibieron datos de imagen'));
+          }
+        });
+
+        cliente.on('error', (err: any) => {
+          clearTimeout(timeout);
+          reject(new Error('Error de conexión: ' + (err?.message || 'Desconocido')));
+        });
+      } catch (err) {
+        reject(new Error('No se pudo conectar: ' + (err as any)?.message));
+      }
+    });
   };
 
   return (
@@ -583,11 +825,31 @@ export default function ExploreScreen() {
                   3. Evidencia visual
                 </Text>
                 {isEditing ? (
-                  <ImagePickerComponent
-                    onImagesSelected={() => { }}
-                    maxImages={5}
-                    maxSizePerImage={5 * 1024 * 1024}
-                  />
+                  <>
+                    {selectedTicket?.imagenes && selectedTicket.imagenes.length > 0 && (
+                      <View className="mb-4">
+                        <ImageGallery
+                          images={selectedTicket.imagenes}
+                          isLoading={false}
+                          onDownloadImage={(imageId) => downloadImage(imageId)}
+                        />
+                      </View>
+                    )}
+
+                    <ImagePickerComponent
+                      onImagesSelected={(imgs) => setEditNewImages(imgs.map(i => ({ uri: i.uri, name: i.name, size: i.size, type: i.type })))}
+                      maxImages={5}
+                      maxSizePerImage={5 * 1024 * 1024}
+                    />
+                  </>
+                ) : selectedTicket.imagenes && selectedTicket.imagenes.length > 0 ? (
+                  <View className="mb-8">
+                    <ImageGallery
+                      images={selectedTicket.imagenes}
+                      isLoading={false}
+                      onDownloadImage={(imageId) => downloadImage(imageId)}
+                    />
+                  </View>
                 ) : (
                   <View className="border-2 border-dashed border-gray-200 rounded-3xl h-40 items-center justify-center bg-gray-50 mb-8">
                     <IconSymbol name="archivebox.fill" size={40} color="#CBD5E1" />

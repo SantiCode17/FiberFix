@@ -5,6 +5,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useUser } from '@/context/UserContext';
 import { useLocation } from '@/hooks/useLocation';
 import { MOTIVOS_PREDEFINIDOS } from '@/types/motivo';
+import * as FileSystem from 'expo-file-system/legacy';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -258,10 +259,16 @@ export default function TicketScreen() {
     setSending(true);
 
     try {
-      const incidenciaMsg = `INCIDENT|${userId}|${ticketNumber}|${finalReason}|${incidentNote || 'Sin descripción'}`;
-      await sendViaSocket(incidenciaMsg);
+      // Si hay imágenes, usar el nuevo protocolo INCIDENT_WITH_IMAGES
+      if (selectedImages.length > 0) {
+        await sendIncidentWithImages(finalReason, incidentNote);
+      } else {
+        // Si no hay imágenes, usar el protocolo antiguo
+        const incidenciaMsg = `INCIDENT|${userId}|${ticketNumber}|${finalReason}|${incidentNote || 'Sin descripción'}`;
+        await sendViaSocket(incidenciaMsg);
+      }
 
-      showSuccess('¡Incidencia Registrada!', 'El reporte se ha enviado correctamente');
+      showSuccess('¡Incidencia Registrada!', 'El reporte se ha enviado correctamente con ' + selectedImages.length + (selectedImages.length === 1 ? ' imagen' : ' imágenes'));
       setShowIncidentModal(false);
       setIsWorking(false);
       setTicketNumber('');
@@ -274,6 +281,144 @@ export default function TicketScreen() {
     } finally {
       setSending(false);
     }
+  };
+
+  /**
+   * Envía una incidencia con imágenes usando el protocolo INCIDENT_WITH_IMAGES
+   * Protocolo: INCIDENT_WITH_IMAGES|usuario|numeroTicket|motivo|descripcion|numImágenes
+   * Seguido de datos binarios de imágenes
+   */
+  const sendIncidentWithImages = async (motivo: string, descripcion: string): Promise<void> => {
+    return new Promise(async (resolve, reject) => {
+      if (!TcpSocket) {
+        reject(new Error('Socket TCP no disponible'));
+        return;
+      }
+
+      try {
+        // Convertir imágenes a datos base64 usando expo-file-system
+        const imagenData: { uri: string; base64: string; name: string; type: string; size: number }[] = [];
+
+        for (const image of selectedImages) {
+          try {
+            const uri = image.uri;
+            // Leer archivo local directamente como base64 (maneja file:// y content://)
+            // Algunos paquetes de `expo-file-system` no exponen `EncodingType` en los tipos,
+            // así que llamamos con un cast a `any` y usamos la cadena 'base64' en tiempo de ejecución.
+            const base64String = await (FileSystem as any).readAsStringAsync(uri, { encoding: 'base64' });
+
+            imagenData.push({
+              uri,
+              base64: base64String,
+              name: image.name,
+              type: image.type,
+              size: image.size,
+            });
+          } catch (error) {
+            console.error('Error procesando imagen:', error);
+            throw new Error('No se pudo procesar la imagen ' + image.name);
+          }
+        }
+
+        // Conectar y enviar
+        let sentAll = false;
+        const cliente = TcpSocket.createConnection(
+          { host: SERVER_IP, port: SERVER_PORT },
+          async () => {
+            try {
+              // Sanitizar texto para evitar romper el protocolo (pipes o saltos de línea)
+              const safeMotivo = motivo.replace(/\|/g, ' ').replace(/\r?\n/g, ' ');
+              const safeDescripcion = descripcion.replace(/\|/g, ' ').replace(/\r?\n/g, ' ');
+
+              // Helper para escribir en socket usando siempre el callback
+              const writeAsync = (data: string, timeoutMs = 10000) => new Promise<void>((res, rej) => {
+                let finished = false;
+                const timer = setTimeout(() => {
+                  if (!finished) {
+                    finished = true;
+                    rej(new Error('Timeout al escribir en socket'));
+                  }
+                }, timeoutMs);
+
+                try {
+                  cliente.write(data, undefined, () => {
+                    if (finished) return;
+                    finished = true;
+                    clearTimeout(timer);
+                    res();
+                  });
+                } catch (e) {
+                  if (finished) return;
+                  finished = true;
+                  clearTimeout(timer);
+                  rej(e as Error);
+                }
+              });
+
+              // Construir un solo payload que contenga header, metadatos y Base64
+              // Esto evita fragmentación por múltiples writes y asegura que el servidor reciba todo de una vez.
+              let payload = '';
+              payload += `INCIDENT_WITH_IMAGES|${userId}|${ticketNumber}|${safeMotivo}|${safeDescripcion}|${imagenData.length}\n`;
+
+              for (const img of imagenData) {
+                // Dependiendo de lo que el servidor espere, dejamos una línea vacía entre metadatos y base64
+                payload += `${img.name}|${img.type}|${img.size}\n`;
+                payload += `${img.base64}\n`;
+              }
+              // Depuración removida: payload preparado
+
+              // Enviar todo el payload en una sola escritura (dar más tiempo para grandes transferencias)
+              await writeAsync(payload, 120000);
+              // Marcar que todo fue enviado para empezar a procesar la respuesta del servidor
+              sentAll = true;
+            } catch (error) {
+              cliente.end();
+              reject(error);
+            }
+          }
+        );
+
+        // Debug: monitorizar cierre/fin del socket
+        cliente.on('close', (hadError?: boolean) => {
+          // socket closed
+        });
+
+        let responseReceived = false;
+
+        const timeout = setTimeout(() => {
+          if (!responseReceived) {
+            cliente.end();
+            reject(new Error('Timeout de conexión al servidor'));
+          }
+        }, 30000); // 30 segundos de timeout para transferencia de imágenes
+
+        cliente.on('data', (data) => {
+          // Ignorar respuestas hasta que hayamos enviado todo el payload
+          if (!sentAll) return;
+
+          clearTimeout(timeout);
+          responseReceived = true;
+
+          const response = data.toString().trim();
+
+          if (response === 'INCIDENT_WITH_IMAGES_OK') {
+            cliente.end();
+            resolve();
+          } else {
+            cliente.end();
+            reject(new Error('Error del servidor: ' + response));
+          }
+        });
+
+        cliente.on('error', (err) => {
+          clearTimeout(timeout);
+          cliente.end();
+          reject(new Error('Error de conexión: ' + (err as any).message));
+        });
+      } catch (err) {
+        reject(new Error('No se pudo conectar: ' + (err as any).message));
+      }
+    });
   };
 
   const sendViaSocket = (message: string): Promise<void> => {
