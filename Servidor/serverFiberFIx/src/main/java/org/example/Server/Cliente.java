@@ -86,15 +86,16 @@ public class Cliente implements Runnable {
         }
     }
 
-    public void manejarLogin(String[] partes, PrintWriter salida) {
+    public boolean manejarLogin(String[] partes, PrintWriter salida) {
         if (partes.length != 3) {
             salida.println("LOGIN_ERROR");
-            return;
+            return false;
         }
 
         boolean ok = TecnicoDAO.loginCorrecto(partes[1], partes[2]);
         salida.println(ok ? "LOGIN_OK" : "LOGIN_ERROR");
         System.out.println(ok ? "LOGIN_OK" : "LOGIN_ERROR");
+        return ok;
     }
 
     public void manejarStart (String[] partes, PrintWriter salida) {
@@ -131,7 +132,7 @@ public class Cliente implements Runnable {
         }
     }
 
-    public void manejarFinish(String[] partes, PrintWriter salida) {
+    public boolean manejarFinish(String[] partes, PrintWriter salida) {
         try{
             String usuario = partes[1];
             int numTicket = Integer.parseInt(partes[2]);
@@ -141,9 +142,12 @@ public class Cliente implements Runnable {
             salida.println(ok ? "FINISH_OK" : "FINISH_ERROR");
             System.out.println(ok ? "FINISH_OK" : "FINISH_ERROR");
 
+            return ok;
+
         }catch (Exception e){
             salida.println("FINISH_ERROR");
         }
+        return false;
     }
 
     public void manejarIncident(String[] partes, PrintWriter salida) {
