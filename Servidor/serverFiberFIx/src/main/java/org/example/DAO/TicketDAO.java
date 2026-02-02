@@ -29,9 +29,9 @@ public class TicketDAO {
     // Comprobar si el Ticket ya existe
     private static boolean existeTicket(int numeroTicket, int idTecnico) throws SQLException {
         String sql = """
-            SELECT * FROM Ticket
-            WHERE numero_ticket = ? AND id_tecnico = ?
-        """;
+                    SELECT * FROM Ticket
+                    WHERE numero_ticket = ? AND id_tecnico = ?
+                """;
 
         Connection con = ConexionBD.getConnection();
         PreparedStatement ps = con.prepareStatement(sql);
@@ -80,9 +80,9 @@ public class TicketDAO {
 
             // Crear el ticket
             String sql = """
-                INSERT INTO Ticket (numero_ticket, estado, fecha_inicio, id_tecnico)
-                VALUES (?, 'Pendiente', ?, ?)
-            """;
+                        INSERT INTO Ticket (numero_ticket, estado, fecha_inicio, id_tecnico)
+                        VALUES (?, 'Pendiente', ?, ?)
+                    """;
 
             Connection con = ConexionBD.getConnection();
             PreparedStatement ps = con.prepareStatement(sql);
@@ -115,9 +115,9 @@ public class TicketDAO {
             int idTecnico = obtenerIdTecnico(usuario);
 
             String sql = """
-                UPDATE Ticket SET estado = 'Terminado', fecha_cierre = ?
-                WHERE numero_ticket = ? AND id_tecnico = ?
-            """;
+                        UPDATE Ticket SET estado = 'Terminado', fecha_cierre = ?
+                        WHERE numero_ticket = ? AND id_tecnico = ?
+                    """;
 
             Connection con = ConexionBD.getConnection();
             PreparedStatement ps = con.prepareStatement(sql);
@@ -144,10 +144,10 @@ public class TicketDAO {
             int idTecnico = obtenerIdTecnico(usuario);
 
             String sql = """
-                UPDATE Ticket SET estado = 'Cancelado', motivo = ?, descripcion = ?
-                WHERE numero_ticket = ?
-                  AND id_tecnico = ?
-            """;
+                        UPDATE Ticket SET estado = 'Cancelado', motivo = ?, descripcion = ?
+                        WHERE numero_ticket = ?
+                          AND id_tecnico = ?
+                    """;
 
             Connection con = ConexionBD.getConnection();
             PreparedStatement ps = con.prepareStatement(sql);
@@ -260,10 +260,10 @@ public class TicketDAO {
             int idTecnico = obtenerIdTecnico(usuario);
 
             String sql = """
-                UPDATE Ticket 
-                SET motivo = ?, descripcion = ?, fecha_ultima_edicion = NOW()
-                WHERE id = ? AND id_tecnico = ?
-            """;
+                        UPDATE Ticket 
+                        SET motivo = ?, descripcion = ?, fecha_ultima_edicion = NOW()
+                        WHERE id = ? AND id_tecnico = ?
+                    """;
 
             Connection con = ConexionBD.getConnection();
             PreparedStatement ps = con.prepareStatement(sql);
@@ -287,10 +287,10 @@ public class TicketDAO {
     /**
      * Marcar un ticket como borrado (borrado lógico)
      * Códigos:
-     *  1 = OK
-     *  2 = ERROR_TERMINADO
+     * 1 = OK
+     * 2 = ERROR_TERMINADO
      * -1 = ERROR (no existe o no pertenece al técnico)
-     *  0 = ERROR (otro imprevisto / excepción)
+     * 0 = ERROR (otro imprevisto / excepción)
      */
     public static int marcarComoBorrado(
             String usuario,
@@ -301,9 +301,9 @@ public class TicketDAO {
 
             // Primero verificar que el ticket pertenece al técnico y obtener su estado
             String sqlVerificar = """
-                    SELECT estado FROM Ticket
-                    WHERE id = ? AND id_tecnico = ?
-                """;
+                        SELECT estado FROM Ticket
+                        WHERE id = ? AND id_tecnico = ?
+                    """;
 
             Connection con = ConexionBD.getConnection();
             PreparedStatement psVerificar = con.prepareStatement(sqlVerificar);
@@ -332,10 +332,10 @@ public class TicketDAO {
 
             // Marcar como borrado
             String sql = """
-                    UPDATE Ticket
-                    SET estado = 'Borrado', fecha_ultima_edicion = NOW()
-                    WHERE id = ? AND id_tecnico = ?
-                """;
+                        UPDATE Ticket
+                        SET estado = 'Borrado', fecha_ultima_edicion = NOW()
+                        WHERE id = ? AND id_tecnico = ?
+                    """;
 
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setInt(1, idTicket);
@@ -366,10 +366,10 @@ public class TicketDAO {
             int idTecnico = obtenerIdTecnico(usuario);
 
             String sql = """
-                UPDATE Ticket 
-                SET estado = 'Pendiente', fecha_ultima_edicion = NOW()
-                WHERE id = ? AND id_tecnico = ? AND estado = 'Cancelado'
-            """;
+                        UPDATE Ticket 
+                        SET estado = 'Pendiente', fecha_ultima_edicion = NOW()
+                        WHERE id = ? AND id_tecnico = ? AND estado = 'Cancelado'
+                    """;
 
             Connection con = ConexionBD.getConnection();
             PreparedStatement ps = con.prepareStatement(sql);
@@ -395,7 +395,7 @@ public class TicketDAO {
      * Usado para guardar imágenes y auditoría
      *
      * @param numeroTicket Número del ticket
-     * @param idTecnico ID del técnico propietario
+     * @param idTecnico    ID del técnico propietario
      * @return ID del ticket, -1 si no existe
      */
     public static int obtenerIdTicket(int numeroTicket, int idTecnico) {
@@ -421,7 +421,7 @@ public class TicketDAO {
     /**
      * Obtener detalles completos de un ticket (incluyendo imágenes)
      *
-     * @param usuario Usuario (técnico)
+     * @param usuario  Usuario (técnico)
      * @param idTicket ID del ticket
      * @return String JSON con detalles del ticket e imágenes
      */
@@ -430,11 +430,11 @@ public class TicketDAO {
             int idTecnico = obtenerIdTecnico(usuario);
 
             String sql = """
-                SELECT id, numero_ticket, estado, motivo, descripcion, 
-                       fecha_creacion, fecha_inicio, fecha_cierre, fecha_ultima_edicion
-                FROM Ticket
-                WHERE id = ? AND id_tecnico = ?
-            """;
+                        SELECT id, numero_ticket, estado, motivo, descripcion, 
+                               fecha_creacion, fecha_inicio, fecha_cierre, fecha_ultima_edicion
+                        FROM Ticket
+                        WHERE id = ? AND id_tecnico = ?
+                    """;
 
             Connection con = ConexionBD.getConnection();
             PreparedStatement ps = con.prepareStatement(sql);
@@ -480,14 +480,14 @@ public class TicketDAO {
      * Registrar una incidencia con imágenes (versión mejorada)
      * Guarda la incidencia y todas las imágenes asociadas en una transacción
      *
-     * @param usuario Usuario (técnico)
-     * @param numeroTicket Número del ticket
-     * @param motivo Motivo de la incidencia
-     * @param descripcion Descripción de la incidencia
-     * @param imagenes Array de byte arrays con datos de imágenes
+     * @param usuario        Usuario (técnico)
+     * @param numeroTicket   Número del ticket
+     * @param motivo         Motivo de la incidencia
+     * @param descripcion    Descripción de la incidencia
+     * @param imagenes       Array de byte arrays con datos de imágenes
      * @param nombreArchivos Array de nombres de archivos
-     * @param tiposMime Array de tipos MIME
-     * @param tamaños Array de tamaños en bytes
+     * @param tiposMime      Array de tipos MIME
+     * @param tamaños        Array de tamaños en bytes
      * @return true si se guardó correctamente (incluyendo todas las imágenes)
      */
     public static boolean registrarIncidenciaConImagenes(
@@ -516,9 +516,9 @@ public class TicketDAO {
 
             // 1. Actualizar el estado del ticket
             String sqlTicket = """
-                UPDATE Ticket SET estado = 'Cancelado', motivo = ?, descripcion = ?
-                WHERE id = ? AND id_tecnico = ?
-            """;
+                        UPDATE Ticket SET estado = 'Cancelado', motivo = ?, descripcion = ?
+                        WHERE id = ? AND id_tecnico = ?
+                    """;
 
             PreparedStatement psTicket = con.prepareStatement(sqlTicket);
             psTicket.setString(1, motivo);
@@ -552,9 +552,9 @@ public class TicketDAO {
 
             // 3. Registrar en auditoría
             String sqlAuditoria = """
-                INSERT INTO Auditoria_Ticket (id_ticket, id_tecnico, accion, descripcion)
-                VALUES (?, ?, ?, ?)
-            """;
+                        INSERT INTO Auditoria_Ticket (id_ticket, id_tecnico, accion, descripcion)
+                        VALUES (?, ?, ?, ?)
+                    """;
 
             PreparedStatement psAuditoria = con.prepareStatement(sqlAuditoria);
             psAuditoria.setInt(1, idTicket);
@@ -565,7 +565,7 @@ public class TicketDAO {
 
             // Confirmar transacción
             con.commit();
-            Log.escribirLog("Incidencia registrada correctamente para ticket " + numeroTicket 
+            Log.escribirLog("Incidencia registrada correctamente para ticket " + numeroTicket
                     + " con " + (imagenes != null ? imagenes.length : 0) + " imágenes");
             return true;
 
@@ -595,26 +595,27 @@ public class TicketDAO {
             }
         }
     }
-    public static ArrayList<Ticket> obtenerTickets(){
+
+    public static ArrayList<Ticket> obtenerTickets() {
         String sql = "SELECT * FROM Ticket";
 
         ArrayList<Ticket> tickets = new ArrayList<>();
 
-        try{
+        try {
             Statement statement = ConexionBD.getConnection().createStatement();
             ResultSet resultSet = statement.executeQuery(sql);
 
-            while (resultSet.next()){
-                Estado estado=Estado.CANCELADO;
-                switch (resultSet.getString(3)){
+            while (resultSet.next()) {
+                Estado estado = Estado.CANCELADO;
+                switch (resultSet.getString(3)) {
                     case "Pendiente":
-                        estado=Estado.PENDIENTE;
+                        estado = Estado.PENDIENTE;
                         break;
                     case "En Proceso":
-                        estado=Estado.ENPROCESO;
+                        estado = Estado.ENPROCESO;
                         break;
                     case "Terminado":
-                        estado=Estado.TERMINADO;
+                        estado = Estado.TERMINADO;
                         break;
                 }
                 Timestamp tsInicio = resultSet.getTimestamp(7);
@@ -636,7 +637,7 @@ public class TicketDAO {
             resultSet.close();
 
         } catch (SQLException e) {
-            Log.escribirLog("Error al cargar tickets: "+e);
+            Log.escribirLog("Error al cargar tickets: " + e);
             throw new RuntimeException(e);
         }
 
@@ -644,11 +645,11 @@ public class TicketDAO {
     }
 
 
-    public static boolean crearTicket(Ticket ticket){
+    public static boolean crearTicket(Ticket ticket) {
         String sql = "INSERT INTO Ticket (numero_ticket,estado,descripcion,fecha_creacion,id_tecnico,dni_cliente) VALUES (?,'Pendiente',?,?,?,?);";
-        try{
+        try {
             PreparedStatement preparedStatement = ConexionBD.getConnection().prepareStatement(sql);
-            preparedStatement.setInt(1,ticket.getId());
+            preparedStatement.setInt(1, ticket.getId());
             preparedStatement.setString(2, ticket.getDescripcion());
             // Convertir LocalDateTime a Timestamp
             preparedStatement.setTimestamp(3, java.sql.Timestamp.valueOf(ticket.getFechaCreacion()));
@@ -658,37 +659,37 @@ public class TicketDAO {
             int filas = preparedStatement.executeUpdate();
             return filas == 1;
         } catch (SQLException e) {
-            Log.escribirLog("Error al crear ticket: "+e.getMessage());
+            Log.escribirLog("Error al crear ticket: " + e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
-    public static boolean comprobarTicket(int id){
+    public static boolean comprobarTicket(int id) {
         String sql = "SELECT * FROM Ticket WHERE numero_ticket = ?";
 
-        try{
-          PreparedStatement preparedStatement = ConexionBD.getConnection().prepareStatement(sql);
-          preparedStatement.setInt(1, id);
-          ResultSet resultSet = preparedStatement.executeQuery();
-          return resultSet.next();
+        try {
+            PreparedStatement preparedStatement = ConexionBD.getConnection().prepareStatement(sql);
+            preparedStatement.setInt(1, id);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            return resultSet.next();
 
         } catch (SQLException e) {
-            Log.escribirLog("Error al comprobar ticket: "+e.getMessage());
+            Log.escribirLog("Error al comprobar ticket: " + e.getMessage());
             throw new RuntimeException(e);
         }
 
     }
 
-    public static boolean eliminarTicket(int numero_ticket){
+    public static boolean eliminarTicket(int numero_ticket) {
         String sql = "DELETE FROM Ticket WHERE numero_ticket = ?";
 
-        try{
+        try {
             PreparedStatement preparedStatement = ConexionBD.getConnection().prepareStatement(sql);
-            preparedStatement.setInt(1,numero_ticket);
+            preparedStatement.setInt(1, numero_ticket);
             int filas = preparedStatement.executeUpdate();
             return filas == 1;
         } catch (SQLException e) {
-            Log.escribirLog("Error al eliminar ticket: "+e.getMessage());
+            Log.escribirLog("Error al eliminar ticket: " + e.getMessage());
             throw new RuntimeException(e);
         }
 
