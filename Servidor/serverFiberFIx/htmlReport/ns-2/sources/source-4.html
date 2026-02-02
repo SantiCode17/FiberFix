@@ -1,0 +1,176 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PosicionTecnico</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">org.example.DTO</a>
+</div>
+
+<h1>Coverage Summary for Class: PosicionTecnico (org.example.DTO)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">PosicionTecnico</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/18)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package org.example.DTO;
+&nbsp;
+&nbsp;import java.sql.*;
+&nbsp;import java.util.Locale;
+&nbsp;
+&nbsp;
+&nbsp;public class PosicionTecnico {
+&nbsp;    private int id;
+&nbsp;    private double latitud;
+&nbsp;    private double longitud;
+&nbsp;    private Timestamp fechaHora;
+&nbsp;    private int idTecnico;
+&nbsp;    private int idTicket;
+&nbsp;
+&nbsp;
+<b class="nc">&nbsp;    public PosicionTecnico(double latitud, double longitud, Timestamp fechaHora, int idTecnico, int idTicket) {</b>
+<b class="nc">&nbsp;        this.latitud = latitud;</b>
+<b class="nc">&nbsp;        this.longitud = longitud;</b>
+<b class="nc">&nbsp;        this.fechaHora = fechaHora;</b>
+<b class="nc">&nbsp;        this.idTecnico = idTecnico;</b>
+<b class="nc">&nbsp;        this.idTicket = idTicket;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    public int getId() {
+<b class="nc">&nbsp;        return id;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setId(int id) {
+<b class="nc">&nbsp;        this.id = id;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public double getLatitud() {
+<b class="nc">&nbsp;        return latitud;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setLatitud(double latitud) {
+<b class="nc">&nbsp;        this.latitud = latitud;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public double getLongitud() {
+<b class="nc">&nbsp;        return longitud;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setLongitud(double longitud) {
+<b class="nc">&nbsp;        this.longitud = longitud;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Timestamp getFechaHora() {
+<b class="nc">&nbsp;        return fechaHora;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setFechaHora(Timestamp fechaHora) {
+<b class="nc">&nbsp;        this.fechaHora = fechaHora;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public int getIdTecnico() {
+<b class="nc">&nbsp;        return idTecnico;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setIdTecnico(int idTecnico) {
+<b class="nc">&nbsp;        this.idTecnico = idTecnico;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public int getIdTicket() {
+<b class="nc">&nbsp;        return idTicket;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setIdTicket(int idTicket) {
+<b class="nc">&nbsp;        this.idTicket = idTicket;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-02 10:25</div>
+</div>
+</body>
+</html>

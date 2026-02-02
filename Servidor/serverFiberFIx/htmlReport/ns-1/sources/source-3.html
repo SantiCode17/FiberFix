@@ -1,0 +1,410 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > ImagenDAO</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">org.example.DAO</a>
+</div>
+
+<h1>Coverage Summary for Class: ImagenDAO (org.example.DAO)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ImagenDAO</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/9)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/40)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/114)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package org.example.DAO;
+&nbsp;
+&nbsp;import org.example.Server.Log;
+&nbsp;
+&nbsp;import java.sql.*;
+&nbsp;
+&nbsp;/**
+&nbsp; * DAO para gestionar las imágenes asociadas a los tickets
+&nbsp; * Maneja el almacenamiento, recuperación y eliminación de imágenes
+&nbsp; */
+<b class="nc">&nbsp;public class ImagenDAO {</b>
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Guardar una imagen asociada a un ticket
+&nbsp;     *
+&nbsp;     * @param idTicket ID del ticket
+&nbsp;     * @param datosImagen Datos binarios de la imagen (BLOB)
+&nbsp;     * @param nombreArchivo Nombre original del archivo
+&nbsp;     * @param tipoMime Tipo MIME de la imagen (ej: image/jpeg)
+&nbsp;     * @param tamanoByte Tamaño en bytes de la imagen
+&nbsp;     * @param descripcion Descripción opcional de la imagen
+&nbsp;     * @return true si se guardó correctamente, false en caso contrario
+&nbsp;     */
+&nbsp;    public static boolean guardarImagen(
+&nbsp;            int idTicket,
+&nbsp;            byte[] datosImagen,
+&nbsp;            String nombreArchivo,
+&nbsp;            String tipoMime,
+&nbsp;            long tamanoByte,
+&nbsp;            String descripcion
+&nbsp;    ) {
+&nbsp;        try {
+&nbsp;            // Validaciones básicas
+<b class="nc">&nbsp;            if (datosImagen == null || datosImagen.length == 0) {</b>
+<b class="nc">&nbsp;                Log.escribirLog(&quot;Error: Datos de imagen vacíos para ticket &quot; + idTicket);</b>
+<b class="nc">&nbsp;                return false;</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            if (datosImagen.length &gt; 5 * 1024 * 1024) { // 5MB</b>
+<b class="nc">&nbsp;                Log.escribirLog(&quot;Error: Imagen muy grande (&quot; + tamanoByte + &quot; bytes) para ticket &quot; + idTicket);</b>
+<b class="nc">&nbsp;                return false;</b>
+&nbsp;            }
+&nbsp;
+&nbsp;            // Validar tipos MIME permitidos
+<b class="nc">&nbsp;            if (!tipoMime.startsWith(&quot;image/&quot;)) {</b>
+<b class="nc">&nbsp;                Log.escribirLog(&quot;Error: Tipo MIME no permitido: &quot; + tipoMime);</b>
+<b class="nc">&nbsp;                return false;</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            String sql = &quot;&quot;&quot;</b>
+&nbsp;                INSERT INTO Imagen_Ticket 
+&nbsp;                (id_ticket, datos_imagen, nombre_archivo, tipo_mime, tamaño_bytes, descripcion)
+&nbsp;                VALUES (?, ?, ?, ?, ?, ?)
+&nbsp;            &quot;&quot;&quot;;
+&nbsp;
+<b class="nc">&nbsp;            Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;            PreparedStatement ps = con.prepareStatement(sql);</b>
+<b class="nc">&nbsp;            ps.setInt(1, idTicket);</b>
+<b class="nc">&nbsp;            ps.setBytes(2, datosImagen);</b>
+<b class="nc">&nbsp;            ps.setString(3, nombreArchivo);</b>
+<b class="nc">&nbsp;            ps.setString(4, tipoMime);</b>
+<b class="nc">&nbsp;            ps.setLong(5, tamanoByte);</b>
+<b class="nc">&nbsp;            ps.setString(6, descripcion != null ? descripcion : &quot;&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;            int resultado = ps.executeUpdate();</b>
+<b class="nc">&nbsp;            if (resultado == 1) {</b>
+<b class="nc">&nbsp;                Log.escribirLog(&quot;Imagen guardada para ticket &quot; + idTicket + &quot; (&quot; + nombreArchivo + &quot;)&quot;);</b>
+<b class="nc">&nbsp;                return true;</b>
+&nbsp;            }
+&nbsp;
+&nbsp;        } catch (SQLException e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error guardando imagen: &quot; + e.getMessage());</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return false;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Obtener las imágenes de un ticket
+&nbsp;     * Devuelve un JSON con metadatos de las imágenes (sin los datos binarios)
+&nbsp;     *
+&nbsp;     * @param idTicket ID del ticket
+&nbsp;     * @return String JSON con información de las imágenes
+&nbsp;     */
+&nbsp;    public static String obtenerImagenes(int idTicket) {
+<b class="nc">&nbsp;        StringBuilder json = new StringBuilder();</b>
+<b class="nc">&nbsp;        json.append(&quot;[&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        String sql = &quot;&quot;&quot;</b>
+&nbsp;            SELECT id, nombre_archivo, tipo_mime, tamaño_bytes, descripcion, fecha_carga
+&nbsp;            FROM Imagen_Ticket
+&nbsp;            WHERE id_ticket = ?
+&nbsp;            ORDER BY fecha_carga DESC
+&nbsp;        &quot;&quot;&quot;;
+&nbsp;
+<b class="nc">&nbsp;        try (Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;             PreparedStatement ps = con.prepareStatement(sql)) {</b>
+&nbsp;
+<b class="nc">&nbsp;            ps.setInt(1, idTicket);</b>
+<b class="nc">&nbsp;            ResultSet rs = ps.executeQuery();</b>
+&nbsp;
+<b class="nc">&nbsp;            boolean primero = true;</b>
+<b class="nc">&nbsp;            while (rs.next()) {</b>
+<b class="nc">&nbsp;                if (!primero) json.append(&quot;,&quot;);</b>
+<b class="nc">&nbsp;                primero = false;</b>
+&nbsp;
+<b class="nc">&nbsp;                json.append(&quot;{&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;id\&quot;:&quot;).append(rs.getInt(&quot;id&quot;)).append(&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;nombre\&quot;:\&quot;&quot;).append(rs.getString(&quot;nombre_archivo&quot;)).append(&quot;\&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;tipo\&quot;:\&quot;&quot;).append(rs.getString(&quot;tipo_mime&quot;)).append(&quot;\&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;tamaño\&quot;:&quot;).append(rs.getLong(&quot;tamaño_bytes&quot;)).append(&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;descripcion\&quot;:&quot;).append(</b>
+<b class="nc">&nbsp;                                rs.getString(&quot;descripcion&quot;) == null || rs.getString(&quot;descripcion&quot;).isEmpty()</b>
+<b class="nc">&nbsp;                                        ? &quot;null&quot;</b>
+<b class="nc">&nbsp;                                        : &quot;\&quot;&quot; + rs.getString(&quot;descripcion&quot;) + &quot;\&quot;&quot;</b>
+<b class="nc">&nbsp;                        ).append(&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;fecha\&quot;:\&quot;&quot;).append(rs.getString(&quot;fecha_carga&quot;)).append(&quot;\&quot;&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;}&quot;);</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            json.append(&quot;]&quot;);</b>
+<b class="nc">&nbsp;            return json.toString();</b>
+&nbsp;
+&nbsp;        } catch (SQLException e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error obteniendo imágenes del ticket &quot; + idTicket + &quot;: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            return &quot;[]&quot;;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Obtener los datos binarios de una imagen específica
+&nbsp;     *
+&nbsp;     * @param idImagen ID de la imagen
+&nbsp;     * @return byte[] con los datos de la imagen, null si no existe
+&nbsp;     */
+&nbsp;    public static byte[] obtenerDatosImagen(int idImagen) {
+<b class="nc">&nbsp;        String sql = &quot;SELECT datos_imagen FROM Imagen_Ticket WHERE id = ?&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;        try (Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;             PreparedStatement ps = con.prepareStatement(sql)) {</b>
+&nbsp;
+<b class="nc">&nbsp;            ps.setInt(1, idImagen);</b>
+<b class="nc">&nbsp;            ResultSet rs = ps.executeQuery();</b>
+&nbsp;
+<b class="nc">&nbsp;            if (rs.next()) {</b>
+<b class="nc">&nbsp;                return rs.getBytes(&quot;datos_imagen&quot;);</b>
+&nbsp;            }
+&nbsp;
+&nbsp;        } catch (SQLException e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error obteniendo datos de imagen: &quot; + e.getMessage());</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return null;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Obtener metadatos de una imagen sin los datos binarios
+&nbsp;     *
+&nbsp;     * @param idImagen ID de la imagen
+&nbsp;     * @return String JSON con metadatos
+&nbsp;     */
+&nbsp;    public static String obtenerMetadatosImagen(int idImagen) {
+<b class="nc">&nbsp;        String sql = &quot;&quot;&quot;</b>
+&nbsp;            SELECT id, id_ticket, nombre_archivo, tipo_mime, tamaño_bytes, descripcion, fecha_carga
+&nbsp;            FROM Imagen_Ticket
+&nbsp;            WHERE id = ?
+&nbsp;        &quot;&quot;&quot;;
+&nbsp;
+<b class="nc">&nbsp;        try (Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;             PreparedStatement ps = con.prepareStatement(sql)) {</b>
+&nbsp;
+<b class="nc">&nbsp;            ps.setInt(1, idImagen);</b>
+<b class="nc">&nbsp;            ResultSet rs = ps.executeQuery();</b>
+&nbsp;
+<b class="nc">&nbsp;            if (rs.next()) {</b>
+<b class="nc">&nbsp;                return &quot;{&quot; +</b>
+<b class="nc">&nbsp;                        &quot;\&quot;id\&quot;:&quot; + rs.getInt(&quot;id&quot;) + &quot;,&quot; +</b>
+<b class="nc">&nbsp;                        &quot;\&quot;id_ticket\&quot;:&quot; + rs.getInt(&quot;id_ticket&quot;) + &quot;,&quot; +</b>
+<b class="nc">&nbsp;                        &quot;\&quot;nombre\&quot;:\&quot;&quot; + rs.getString(&quot;nombre_archivo&quot;) + &quot;\&quot;,&quot; +</b>
+<b class="nc">&nbsp;                        &quot;\&quot;tipo\&quot;:\&quot;&quot; + rs.getString(&quot;tipo_mime&quot;) + &quot;\&quot;,&quot; +</b>
+<b class="nc">&nbsp;                        &quot;\&quot;tamaño\&quot;:&quot; + rs.getLong(&quot;tamaño_bytes&quot;) + &quot;,&quot; +</b>
+<b class="nc">&nbsp;                        &quot;\&quot;descripcion\&quot;:&quot; + (rs.getString(&quot;descripcion&quot;) == null ? &quot;null&quot; : &quot;\&quot;&quot; + rs.getString(&quot;descripcion&quot;) + &quot;\&quot;&quot;) + &quot;,&quot; +</b>
+<b class="nc">&nbsp;                        &quot;\&quot;fecha\&quot;:\&quot;&quot; + rs.getString(&quot;fecha_carga&quot;) + &quot;\&quot;&quot; +</b>
+&nbsp;                        &quot;}&quot;;
+&nbsp;            }
+&nbsp;
+&nbsp;        } catch (SQLException e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error obteniendo metadatos de imagen: &quot; + e.getMessage());</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return null;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Eliminar una imagen específica
+&nbsp;     * Nota: El constraint ON DELETE CASCADE eliminará automáticamente las imágenes
+&nbsp;     * cuando se elimine el ticket asociado
+&nbsp;     *
+&nbsp;     * @param idImagen ID de la imagen a eliminar
+&nbsp;     * @return true si se eliminó correctamente
+&nbsp;     */
+&nbsp;    public static boolean eliminarImagen(int idImagen) {
+<b class="nc">&nbsp;        String sql = &quot;DELETE FROM Imagen_Ticket WHERE id = ?&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;        try (Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;             PreparedStatement ps = con.prepareStatement(sql)) {</b>
+&nbsp;
+<b class="nc">&nbsp;            ps.setInt(1, idImagen);</b>
+<b class="nc">&nbsp;            int resultado = ps.executeUpdate();</b>
+&nbsp;
+<b class="nc">&nbsp;            if (resultado == 1) {</b>
+<b class="nc">&nbsp;                Log.escribirLog(&quot;Imagen &quot; + idImagen + &quot; eliminada correctamente&quot;);</b>
+<b class="nc">&nbsp;                return true;</b>
+&nbsp;            }
+&nbsp;
+&nbsp;        } catch (SQLException e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error eliminando imagen: &quot; + e.getMessage());</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return false;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Eliminar todas las imágenes de un ticket
+&nbsp;     * Útil al borrar un ticket completo
+&nbsp;     *
+&nbsp;     * @param idTicket ID del ticket
+&nbsp;     * @return Número de imágenes eliminadas
+&nbsp;     */
+&nbsp;    public static int eliminarImagenesTicket(int idTicket) {
+<b class="nc">&nbsp;        String sql = &quot;DELETE FROM Imagen_Ticket WHERE id_ticket = ?&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;        try (Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;             PreparedStatement ps = con.prepareStatement(sql)) {</b>
+&nbsp;
+<b class="nc">&nbsp;            ps.setInt(1, idTicket);</b>
+<b class="nc">&nbsp;            int resultado = ps.executeUpdate();</b>
+&nbsp;
+<b class="nc">&nbsp;            if (resultado &gt; 0) {</b>
+<b class="nc">&nbsp;                Log.escribirLog(resultado + &quot; imágenes eliminadas del ticket &quot; + idTicket);</b>
+&nbsp;            }
+<b class="nc">&nbsp;            return resultado;</b>
+&nbsp;
+&nbsp;        } catch (SQLException e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error eliminando imágenes del ticket: &quot; + e.getMessage());</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return 0;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Obtener el contador de imágenes para un ticket
+&nbsp;     *
+&nbsp;     * @param idTicket ID del ticket
+&nbsp;     * @return Número de imágenes asociadas
+&nbsp;     */
+&nbsp;    public static int contarImágenes(int idTicket) {
+<b class="nc">&nbsp;        String sql = &quot;SELECT COUNT(*) as cantidad FROM Imagen_Ticket WHERE id_ticket = ?&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;        try (Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;             PreparedStatement ps = con.prepareStatement(sql)) {</b>
+&nbsp;
+<b class="nc">&nbsp;            ps.setInt(1, idTicket);</b>
+<b class="nc">&nbsp;            ResultSet rs = ps.executeQuery();</b>
+&nbsp;
+<b class="nc">&nbsp;            if (rs.next()) {</b>
+<b class="nc">&nbsp;                return rs.getInt(&quot;cantidad&quot;);</b>
+&nbsp;            }
+&nbsp;
+&nbsp;        } catch (SQLException e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error contando imágenes: &quot; + e.getMessage());</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return 0;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Actualizar la descripción de una imagen
+&nbsp;     *
+&nbsp;     * @param idImagen ID de la imagen
+&nbsp;     * @param descripcion Nueva descripción
+&nbsp;     * @return true si se actualizó correctamente
+&nbsp;     */
+&nbsp;    public static boolean actualizarDescripcion(int idImagen, String descripcion) {
+<b class="nc">&nbsp;        String sql = &quot;UPDATE Imagen_Ticket SET descripcion = ? WHERE id = ?&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;        try (Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;             PreparedStatement ps = con.prepareStatement(sql)) {</b>
+&nbsp;
+<b class="nc">&nbsp;            ps.setString(1, descripcion);</b>
+<b class="nc">&nbsp;            ps.setInt(2, idImagen);</b>
+&nbsp;
+<b class="nc">&nbsp;            return ps.executeUpdate() == 1;</b>
+&nbsp;
+&nbsp;        } catch (SQLException e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error actualizando descripción de imagen: &quot; + e.getMessage());</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return false;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-02 10:25</div>
+</div>
+</body>
+</html>

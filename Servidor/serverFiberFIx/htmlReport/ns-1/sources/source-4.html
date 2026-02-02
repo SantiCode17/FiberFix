@@ -1,0 +1,144 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PosicionDAO</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">org.example.DAO</a>
+</div>
+
+<h1>Coverage Summary for Class: PosicionDAO (org.example.DAO)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">PosicionDAO</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/10)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package org.example.DAO;
+&nbsp;
+&nbsp;import org.example.Server.Log;
+&nbsp;
+&nbsp;import java.sql.Connection;
+&nbsp;import java.sql.PreparedStatement;
+&nbsp;import java.sql.SQLException;
+&nbsp;
+<b class="nc">&nbsp;public class PosicionDAO {</b>
+&nbsp;
+&nbsp;    public static void guardarPosicion(
+&nbsp;            int idTecnico,
+&nbsp;            int ticket,
+&nbsp;            double lat,
+&nbsp;            double lon
+&nbsp;    ) {
+&nbsp;
+<b class="nc">&nbsp;        String sql = &quot;&quot;&quot;</b>
+&nbsp;            INSERT INTO Posicion_Tecnico (latitud, longitud, id_tecnico, id_ticket)
+&nbsp;            SELECT ?, ?, id, ?
+&nbsp;            FROM Tecnico
+&nbsp;            WHERE usuario = ?
+&nbsp;        &quot;&quot;&quot;;
+&nbsp;
+&nbsp;        try (
+<b class="nc">&nbsp;                Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;                PreparedStatement ps = con.prepareStatement(sql)</b>
+&nbsp;        ) {
+<b class="nc">&nbsp;            ps.setDouble(1, lat);</b>
+<b class="nc">&nbsp;            ps.setDouble(2, lon);</b>
+<b class="nc">&nbsp;            ps.setInt(3, idTecnico);</b>
+<b class="nc">&nbsp;            ps.setInt(4, ticket);</b>
+&nbsp;
+<b class="nc">&nbsp;            ps.executeUpdate();</b>
+&nbsp;
+&nbsp;        } catch (SQLException e) {
+<b class="nc">&nbsp;            Log.escribirLog(e.getMessage());</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-02 10:25</div>
+</div>
+</body>
+</html>
