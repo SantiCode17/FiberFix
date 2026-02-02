@@ -1,6 +1,5 @@
 package org.example.DAO;
 
-import org.example.DTO.Cliente;
 import org.example.DTO.Estado;
 import org.example.DTO.Ticket;
 import org.example.Server.Log;
