@@ -1,0 +1,402 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > Server</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">org.example.Server</a>
+</div>
+
+<h1>Coverage Summary for Class: Server (org.example.Server)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">Server</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/59)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/149)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package org.example.Server;
+&nbsp;
+&nbsp;import org.example.DAO.ClienteDAO;
+&nbsp;import org.example.DAO.TecnicoDAO;
+&nbsp;import org.example.DAO.TicketDAO;
+&nbsp;import org.example.DTO.Tecnico;
+&nbsp;import org.example.DTO.Ticket;
+&nbsp;
+&nbsp;import java.io.*;
+&nbsp;import java.net.ServerSocket;
+&nbsp;import java.net.Socket;
+&nbsp;import java.util.Scanner;
+&nbsp;
+<b class="nc">&nbsp;public class Server {</b>
+&nbsp;
+&nbsp;    public static void main(String[] args) {
+<b class="nc">&nbsp;        Scanner sc = new Scanner(System.in);</b>
+<b class="nc">&nbsp;        String opcion = &quot;0&quot;;</b>
+<b class="nc">&nbsp;        while (!opcion.equals(&quot;3&quot;)){</b>
+<b class="nc">&nbsp;            opcion = menuPrincipal();</b>
+<b class="nc">&nbsp;            switch (opcion){</b>
+&nbsp;                case &quot;1&quot;:
+<b class="nc">&nbsp;                    servidor();</b>
+&nbsp;                    break;
+&nbsp;                case &quot;2&quot;:
+<b class="nc">&nbsp;                    String opcion2 = &quot;0&quot;;</b>
+<b class="nc">&nbsp;                    while (!opcion2.equals(&quot;8&quot;)){</b>
+<b class="nc">&nbsp;                        opcion2=menuAdministracion();</b>
+<b class="nc">&nbsp;                        switch (opcion2){</b>
+&nbsp;                            case &quot;1&quot;:
+<b class="nc">&nbsp;                                TecnicoDAO.obtenerTecnicos().forEach(t -&gt; t.mostrar());</b>
+&nbsp;                                break;
+&nbsp;                            case &quot;2&quot;:
+&nbsp;                                String usuario;
+&nbsp;                                do {
+<b class="nc">&nbsp;                                    System.out.print(&quot;Ingrese el usuario: &quot;);</b>
+<b class="nc">&nbsp;                                    usuario = sc.nextLine();</b>
+<b class="nc">&nbsp;                                    if (TecnicoDAO.comprobarTecnico(usuario)){</b>
+<b class="nc">&nbsp;                                        System.out.println(&quot;El técnico ya existe&quot;);</b>
+&nbsp;                                    }
+<b class="nc">&nbsp;                                }while (TecnicoDAO.comprobarTecnico(usuario));</b>
+&nbsp;
+<b class="nc">&nbsp;                                System.out.print(&quot;Introduzca la contraseña: &quot;);</b>
+<b class="nc">&nbsp;                                String contra = sc.nextLine();</b>
+&nbsp;
+<b class="nc">&nbsp;                                System.out.print(&quot;Introduzca el nombre: &quot;);</b>
+<b class="nc">&nbsp;                                String nombre = sc.nextLine();</b>
+&nbsp;
+<b class="nc">&nbsp;                                System.out.print(&quot;Introduzca el apellido: &quot;);</b>
+<b class="nc">&nbsp;                                String apellido = sc.nextLine();</b>
+&nbsp;
+<b class="nc">&nbsp;                                Tecnico tecnico = new Tecnico(usuario, contra, nombre, apellido);</b>
+&nbsp;
+<b class="nc">&nbsp;                                if (TecnicoDAO.insertarTecnico(tecnico)){</b>
+<b class="nc">&nbsp;                                    System.out.println(&quot;El técnico se ha insertado correctamente&quot;);</b>
+&nbsp;                                } else {
+<b class="nc">&nbsp;                                    System.out.println(&quot;El técnico no se ha insertado&quot;);</b>
+&nbsp;                                }
+&nbsp;                                break;
+&nbsp;                            case &quot;3&quot;:
+<b class="nc">&nbsp;                                ClienteDAO.obtenerCLientes().forEach(c -&gt; c.mostrar());</b>
+&nbsp;                                break;
+&nbsp;                            case &quot;4&quot;:
+&nbsp;                                String dni;
+&nbsp;                                do{
+<b class="nc">&nbsp;                                    System.out.print(&quot;Ingrese el dni: &quot;);</b>
+<b class="nc">&nbsp;                                    dni = sc.nextLine();</b>
+<b class="nc">&nbsp;                                    if (ClienteDAO.comprobarCliente(dni)){</b>
+<b class="nc">&nbsp;                                        System.out.println(&quot;El cliente ya existe&quot;);</b>
+&nbsp;                                    }
+<b class="nc">&nbsp;                                }while (ClienteDAO.comprobarCliente(dni));</b>
+&nbsp;
+<b class="nc">&nbsp;                                System.out.print(&quot;Introduzca el nombre: &quot;);</b>
+<b class="nc">&nbsp;                                String nombreCliente = sc.nextLine();</b>
+<b class="nc">&nbsp;                                System.out.print(&quot;Introduzca el apellido: &quot;);</b>
+<b class="nc">&nbsp;                                String apellidoCliente = sc.nextLine();</b>
+<b class="nc">&nbsp;                                System.out.print(&quot;Introduzca la direccion: &quot;);</b>
+<b class="nc">&nbsp;                                String direccionCliente = sc.nextLine();</b>
+<b class="nc">&nbsp;                                System.out.print(&quot;Introduzca el telefono: &quot;);</b>
+<b class="nc">&nbsp;                                String telefonoCliente = sc.nextLine();</b>
+<b class="nc">&nbsp;                                org.example.DTO.Cliente cliente = new org.example.DTO.Cliente(dni, nombreCliente, apellidoCliente, direccionCliente, telefonoCliente);</b>
+<b class="nc">&nbsp;                                if (ClienteDAO.insertarCliente(cliente)){</b>
+<b class="nc">&nbsp;                                    System.out.println(&quot;El cliente se ha insertado correctamente&quot;);</b>
+&nbsp;                                } else {
+<b class="nc">&nbsp;                                    System.out.println(&quot;El cliente no se ha insertado&quot;);</b>
+&nbsp;                                }
+&nbsp;                                break;
+&nbsp;                            case &quot;5&quot;:
+<b class="nc">&nbsp;                                TicketDAO.obtenerTickets().forEach(t -&gt; t.mostrar());</b>
+&nbsp;                                break;
+&nbsp;                            case &quot;6&quot;:
+&nbsp;                                String idString;
+&nbsp;                                do {
+<b class="nc">&nbsp;                                    System.out.print(&quot;Ingrese el número del ticket: &quot;);</b>
+<b class="nc">&nbsp;                                    idString = sc.nextLine();</b>
+<b class="nc">&nbsp;                                    if (!idString.matches(&quot;\\d+&quot;)){</b>
+<b class="nc">&nbsp;                                        System.out.println(&quot;Introduce un número entero&quot;);</b>
+<b class="nc">&nbsp;                                    } else if (TicketDAO.comprobarTicket(Integer.parseInt(idString))){</b>
+<b class="nc">&nbsp;                                        System.out.println(&quot;El ticket ya existe&quot;);</b>
+&nbsp;                                    }
+<b class="nc">&nbsp;                                }while ((!idString.matches(&quot;\\d+&quot;))||(TicketDAO.comprobarTicket(Integer.parseInt(idString))));</b>
+<b class="nc">&nbsp;                                System.out.print(&quot;Introduzca una descripción del ticket: &quot;);</b>
+<b class="nc">&nbsp;                                String descripcion = sc.nextLine();</b>
+&nbsp;
+&nbsp;                                String usuarioTecnico;
+&nbsp;                                do {
+<b class="nc">&nbsp;                                    System.out.print(&quot;Ingrese el usuario del técnico: &quot;);</b>
+<b class="nc">&nbsp;                                    usuarioTecnico = sc.nextLine();</b>
+<b class="nc">&nbsp;                                    if (!TecnicoDAO.comprobarTecnico(usuarioTecnico)){</b>
+<b class="nc">&nbsp;                                        System.out.println(&quot;El técnico no existe&quot;);</b>
+&nbsp;                                    }
+<b class="nc">&nbsp;                                }while (!TecnicoDAO.comprobarTecnico(usuarioTecnico));</b>
+&nbsp;
+<b class="nc">&nbsp;                                int idTecnico = TecnicoDAO.getIdTecnico(usuarioTecnico);</b>
+&nbsp;
+&nbsp;                                String dniTicket;
+&nbsp;                                do{
+<b class="nc">&nbsp;                                    System.out.print(&quot;Ingrese el dni del cliente: &quot;);</b>
+<b class="nc">&nbsp;                                    dniTicket = sc.nextLine();</b>
+<b class="nc">&nbsp;                                    if (!ClienteDAO.comprobarCliente(dniTicket)){</b>
+<b class="nc">&nbsp;                                        System.out.println(&quot;El cliente no existe&quot;);</b>
+&nbsp;                                    }
+<b class="nc">&nbsp;                                }while (!ClienteDAO.comprobarCliente(dniTicket));</b>
+&nbsp;
+<b class="nc">&nbsp;                                Ticket ticket = new Ticket(idTecnico, descripcion, idTecnico, dniTicket);</b>
+&nbsp;
+<b class="nc">&nbsp;                                if (TicketDAO.crearTicket(ticket)){</b>
+<b class="nc">&nbsp;                                    System.out.println(&quot;El ticket se ha insertado correctamente&quot;);</b>
+&nbsp;                                } else {
+<b class="nc">&nbsp;                                    System.out.println(&quot;El ticket no se ha insertado&quot;);</b>
+&nbsp;                                }
+&nbsp;
+&nbsp;                                break;
+&nbsp;                            case &quot;7&quot;:
+&nbsp;                                String idStringTicket;
+&nbsp;                                do {
+<b class="nc">&nbsp;                                    System.out.print(&quot;Ingrese el número del ticket: &quot;);</b>
+<b class="nc">&nbsp;                                    idStringTicket = sc.nextLine();</b>
+<b class="nc">&nbsp;                                    if (!idStringTicket.matches(&quot;\\d+&quot;)){</b>
+<b class="nc">&nbsp;                                        System.out.println(&quot;Introduce un número entero&quot;);</b>
+<b class="nc">&nbsp;                                    } else if (!TicketDAO.comprobarTicket(Integer.parseInt(idStringTicket))){</b>
+<b class="nc">&nbsp;                                        System.out.println(&quot;El ticket no existe&quot;);</b>
+&nbsp;                                    }
+<b class="nc">&nbsp;                                }while ((!idStringTicket.matches(&quot;\\d+&quot;))||(!TicketDAO.comprobarTicket(Integer.parseInt(idStringTicket))));</b>
+&nbsp;
+<b class="nc">&nbsp;                                if (TicketDAO.eliminarTicket(Integer.parseInt(idStringTicket))){</b>
+<b class="nc">&nbsp;                                    System.out.println(&quot;El ticket se ha eliminado correctamente&quot;);</b>
+&nbsp;                                } else {
+<b class="nc">&nbsp;                                    System.out.println(&quot;El ticket no se ha eliminado&quot;);</b>
+&nbsp;                                }
+&nbsp;
+&nbsp;                                break;
+&nbsp;                            case &quot;8&quot;:
+<b class="nc">&nbsp;                                System.out.println(&quot;Volviendo...&quot;);</b>
+&nbsp;                                break;
+&nbsp;                            default:
+<b class="nc">&nbsp;                                System.out.println(&quot;Opción incorrecta&quot;);</b>
+&nbsp;                        }
+&nbsp;                    }
+&nbsp;                    break;
+&nbsp;                case &quot;3&quot;:
+<b class="nc">&nbsp;                    System.out.println(&quot;Saliendo&quot;);</b>
+&nbsp;                    break;
+&nbsp;                default:
+<b class="nc">&nbsp;                    System.out.println(&quot;Opción incorrecta&quot;);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    public static String menuPrincipal() {
+<b class="nc">&nbsp;        Scanner sc = new Scanner(System.in);</b>
+&nbsp;
+&nbsp;        // Colores ANSI
+<b class="nc">&nbsp;        final String RESET = &quot;\u001B[0m&quot;;</b>
+<b class="nc">&nbsp;        final String AZUL = &quot;\u001B[34m&quot;;</b>
+<b class="nc">&nbsp;        final String VERDE = &quot;\u001B[32m&quot;;</b>
+<b class="nc">&nbsp;        final String AMARILLO = &quot;\u001B[33m&quot;;</b>
+<b class="nc">&nbsp;        final String ROJO = &quot;\u001B[31m&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;        System.out.println(AZUL + &quot;╔══════════════════════════════╗&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;║        MENÚ PRINCIPAL        ║&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;╠══════════════════════════════╣&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;║ &quot; + VERDE   + &quot;1️⃣  Iniciar el servidor      &quot; + AZUL + &quot;║&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;║ &quot; + AMARILLO+ &quot;2️⃣  Menú de administración   &quot; + AZUL + &quot;║&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;║ &quot; + ROJO    + &quot;3️⃣  Salir                    &quot; + AZUL + &quot;║&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;╚══════════════════════════════╝&quot; + RESET);</b>
+&nbsp;
+<b class="nc">&nbsp;        System.out.print(&quot;👉 Seleccione una opción: &quot;);</b>
+<b class="nc">&nbsp;        return sc.nextLine();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    public static String menuAdministracion() {
+<b class="nc">&nbsp;        Scanner sc = new Scanner(System.in);</b>
+&nbsp;
+&nbsp;        // Colores ANSI
+<b class="nc">&nbsp;        final String RESET = &quot;\u001B[0m&quot;;</b>
+<b class="nc">&nbsp;        final String AZUL = &quot;\u001B[34m&quot;;</b>
+<b class="nc">&nbsp;        final String VERDE = &quot;\u001B[32m&quot;;</b>
+<b class="nc">&nbsp;        final String AMARILLO = &quot;\u001B[33m&quot;;</b>
+<b class="nc">&nbsp;        final String CIAN = &quot;\u001B[36m&quot;;</b>
+<b class="nc">&nbsp;        final String ROJO = &quot;\u001B[31m&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;        System.out.println(AZUL + &quot;╔════════════════════════════════════╗&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;║      MENÚ DE ADMINISTRACIÓN        ║&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;╠════════════════════════════════════╣&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;║ &quot; + VERDE   + &quot;1️⃣  Mostrar técnicos          &quot; + AZUL + &quot;     ║&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;║ &quot; + VERDE   + &quot;2️⃣  Crear técnico             &quot; + AZUL + &quot;     ║&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;║ &quot; + AMARILLO+ &quot;3️⃣  Ver clientes              &quot; + AZUL + &quot;     ║&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;║ &quot; + AMARILLO+ &quot;4️⃣  Crear cliente             &quot; + AZUL + &quot;     ║&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;║ &quot; + CIAN    + &quot;5️⃣  Ver tickets               &quot; + AZUL + &quot;     ║&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;║ &quot; + CIAN    + &quot;6️⃣  Crear ticket              &quot; + AZUL + &quot;     ║&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;║ &quot; + ROJO    + &quot;7️⃣  Eliminar ticket           &quot; + AZUL + &quot;     ║&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;║ &quot; + ROJO    + &quot;8️⃣  Volver atrás          &quot; + AZUL + &quot;         ║&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;╚════════════════════════════════════╝&quot; + RESET);</b>
+&nbsp;
+<b class="nc">&nbsp;        System.out.print(&quot;👉 Seleccione una opción: &quot;);</b>
+<b class="nc">&nbsp;        return sc.nextLine();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static void servidor(){
+&nbsp;        // Colores ANSI
+<b class="nc">&nbsp;        final String RESET = &quot;\u001B[0m&quot;;</b>
+<b class="nc">&nbsp;        final String AZUL = &quot;\u001B[34m&quot;;</b>
+<b class="nc">&nbsp;        final String VERDE = &quot;\u001B[32m&quot;;</b>
+<b class="nc">&nbsp;        final String AMARILLO = &quot;\u001B[33m&quot;;</b>
+<b class="nc">&nbsp;        final String ROJO = &quot;\u001B[31m&quot;;</b>
+<b class="nc">&nbsp;        final String CIAN = &quot;\u001B[36m&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;        System.out.println(CIAN +</b>
+&nbsp;                &quot;╔════════════════════════════════════╗\n&quot; +
+&nbsp;                &quot;║           SERVIDOR INICIADO        ║\n&quot; +
+&nbsp;                &quot;╚════════════════════════════════════╝&quot; +
+&nbsp;                RESET
+&nbsp;        );
+&nbsp;
+&nbsp;        //Leer puerto de fichero
+<b class="nc">&nbsp;        int puerto = 0;</b>
+&nbsp;
+&nbsp;        try {
+<b class="nc">&nbsp;            BufferedReader br = new BufferedReader(new FileReader(&quot;server.properties&quot;));</b>
+&nbsp;            String linea;
+<b class="nc">&nbsp;            while ((linea = br.readLine()) != null){</b>
+<b class="nc">&nbsp;                if (linea.contains(&quot;SERVER-PORT&quot;)){</b>
+<b class="nc">&nbsp;                    puerto = Integer.parseInt(linea.split(&quot;:&quot;)[1]);</b>
+&nbsp;                }
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            System.out.println(VERDE + &quot;✔ Puerto cargado correctamente: &quot; + puerto + RESET);</b>
+&nbsp;
+&nbsp;        } catch (FileNotFoundException e) {
+<b class="nc">&nbsp;            System.out.println(ROJO + &quot;✖ No se encontró server.properties&quot; + RESET);</b>
+<b class="nc">&nbsp;            Log.escribirLog(e.getMessage());</b>
+&nbsp;        } catch (IOException e) {
+<b class="nc">&nbsp;            System.out.println(ROJO + &quot;✖ Error al leer el fichero de configuración&quot; + RESET);</b>
+<b class="nc">&nbsp;            Log.escribirLog(e.getMessage());</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        try (ServerSocket serverSocket = new ServerSocket(puerto)) {</b>
+&nbsp;
+<b class="nc">&nbsp;            System.out.println(AMARILLO + &quot;⏳ Servidor escuchando en el puerto &quot; + puerto + &quot;...&quot; + RESET);</b>
+<b class="nc">&nbsp;            System.out.println(AZUL + &quot;🔌 Esperando conexiones de clientes\n&quot; + RESET);</b>
+&nbsp;
+<b class="nc">&nbsp;            int numCliente = 1;</b>
+&nbsp;            while (true) {
+&nbsp;                // Espera a que un cliente se conecte
+<b class="nc">&nbsp;                Socket cliente = serverSocket.accept();</b>
+<b class="nc">&nbsp;                System.out.println(</b>
+&nbsp;                        VERDE + &quot;🟢 Cliente conectado: &quot; +
+<b class="nc">&nbsp;                                cliente.getInetAddress() + RESET</b>
+&nbsp;                );
+&nbsp;
+&nbsp;                // Crear un hilo para atender al cliente
+<b class="nc">&nbsp;                Thread hilo = new Thread(new Cliente(cliente),&quot;Cliente &quot;+numCliente);</b>
+<b class="nc">&nbsp;                numCliente++;</b>
+<b class="nc">&nbsp;                hilo.start();</b>
+&nbsp;            }
+&nbsp;
+&nbsp;        } catch (IOException e) {
+<b class="nc">&nbsp;            System.out.println(ROJO + &quot;✖ Error al iniciar el servidor en el puerto &quot; + puerto + RESET);</b>
+<b class="nc">&nbsp;            Log.escribirLog(e.getMessage());</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-02 10:25</div>
+</div>
+</body>
+</html>
