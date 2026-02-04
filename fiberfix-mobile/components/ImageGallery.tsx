@@ -127,14 +127,18 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
           </TouchableOpacity>
         ) : (
           <View style={{ width: width - 32, height: 300 }} className="bg-gray-200 justify-center items-center">
-            {loadingImageId === currentImage.id ? (
-              <ActivityIndicator size="large" color="#3B82F6" />
+            {(loadingImageId === currentImage.id || isLoading) ? (
+              <>
+                <ActivityIndicator size="large" color="#3B82F6" />
+                <Text className="text-blue-500 mt-2 font-semibold">Cargando imágenes</Text>
+              </>
             ) : (
               <TouchableOpacity
                 onPress={() => handleLoadImage(currentImage.id)}
                 className="items-center"
               >
-                <IconSymbol name="arrow.down.circle" size={48} color="#3B82F6" />
+                {/* Icono eliminado, solo spinner y texto */}
+                <ActivityIndicator size="large" color="#3B82F6" />
                 <Text className="text-blue-500 mt-2 font-semibold">Cargando imágenes</Text>
               </TouchableOpacity>
             )}
