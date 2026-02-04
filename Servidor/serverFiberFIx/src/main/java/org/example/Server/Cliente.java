@@ -86,7 +86,7 @@ public class Cliente implements Runnable {
         }
     }
 
-    public void manejarLogin(String[] partes, PrintWriter salida) {
+    public boolean manejarLogin(String[] partes, PrintWriter salida) {
         if (partes.length != 3) {
             salida.println("LOGIN_ERROR");
             salida.flush();
@@ -97,6 +97,7 @@ public class Cliente implements Runnable {
         salida.println(ok ? "LOGIN_OK" : "LOGIN_ERROR");
         salida.flush();
         System.out.println(ok ? "LOGIN_OK" : "LOGIN_ERROR");
+        return ok;
     }
 
     public void manejarStart (String[] partes, PrintWriter salida) {
@@ -133,7 +134,7 @@ public class Cliente implements Runnable {
         }
     }
 
-    public void manejarFinish(String[] partes, PrintWriter salida) {
+    public boolean manejarFinish(String[] partes, PrintWriter salida) {
         try{
             String usuario = partes[1];
             int numTicket = Integer.parseInt(partes[2]);
@@ -143,9 +144,12 @@ public class Cliente implements Runnable {
             salida.println(ok ? "FINISH_OK" : "FINISH_ERROR");
             System.out.println(ok ? "FINISH_OK" : "FINISH_ERROR");
 
+            return ok;
+
         }catch (Exception e){
             salida.println("FINISH_ERROR");
         }
+        return false;
     }
 
     public void manejarIncident(String[] partes, PrintWriter salida) {
@@ -176,14 +180,14 @@ public class Cliente implements Runnable {
             // Ya tenemos el encabezado leído
             if (headerLine == null) {
                 salida.println("INCIDENT_WITH_IMAGES_ERROR");
-                return;
+                return false;
             }
 
             String[] partes = headerLine.split("\\|");
             if (partes.length < 6) {
                 Log.escribirLog("Error: formato incorrecto. Recibido: " + headerLine);
                 salida.println("INCIDENT_WITH_IMAGES_ERROR");
-                return;
+                return false;
             }
 
             String usuario = partes[1];
@@ -197,7 +201,7 @@ public class Cliente implements Runnable {
             // Validar número de imágenes
             if (numImagenes < 0 || numImagenes > 5) {
                 salida.println("INCIDENT_WITH_IMAGES_ERROR");
-                return;
+                return false;
             }
 
             byte[][] datosImagenes = new byte[numImagenes][];
@@ -211,13 +215,13 @@ public class Cliente implements Runnable {
                 String metadataLine = br.readLine();
                 if (metadataLine == null) {
                     salida.println("INCIDENT_WITH_IMAGES_ERROR");
-                    return;
+                    return false;
                 }
 
                 String[] metadata = metadataLine.split("\\|");
                 if (metadata.length != 3) {
                     salida.println("INCIDENT_WITH_IMAGES_ERROR");
-                    return;
+                    return false;
                 }
 
                 nombresArchivos[i] = metadata[0];
@@ -229,13 +233,13 @@ public class Cliente implements Runnable {
                 if (tamanoByte > 5 * 1024 * 1024) { // 5MB max
                     Log.escribirLog("Imagen demasiado grande: " + tamanoByte + " bytes");
                     salida.println("INCIDENT_WITH_IMAGES_ERROR");
-                    return;
+                    return false;
                 }
 
                 if (!tiposMime[i].startsWith("image/")) {
                     Log.escribirLog("Tipo MIME no permitido: " + tiposMime[i]);
                     salida.println("INCIDENT_WITH_IMAGES_ERROR");
-                    return;
+                    return false;
                 }
 
                 // Leer datos en base64 (una línea por imagen)
@@ -259,7 +263,7 @@ public class Cliente implements Runnable {
                 } catch (IllegalArgumentException e) {
                     Log.escribirLog("Error decodificando base64 de imagen " + i + ": " + e.getMessage());
                     salida.println("INCIDENT_WITH_IMAGES_ERROR");
-                    return;
+                    return false;
                 }
             }
 
@@ -282,23 +286,25 @@ public class Cliente implements Runnable {
                 salida.println("INCIDENT_WITH_IMAGES_ERROR");
                 System.out.println("INCIDENT_WITH_IMAGES_ERROR");
             }
+            return ok;
 
         } catch (Exception e) {
             Log.escribirLog("Error en manejarIncidentConImagenes: " + e.getMessage());
             e.printStackTrace();
             salida.println("INCIDENT_WITH_IMAGES_ERROR");
         }
+        return true;
     }
 
     /**
      * Obtener detalle de un ticket con imágenes
      * Protocolo: TICKET_DETAIL|usuario|idTicket
      */
-    public void manejarTicketDetail(String[] partes, PrintWriter salida) {
+    public boolean manejarTicketDetail(String[] partes, PrintWriter salida) {
         try {
             if (partes.length != 3) {
                 salida.println("TICKET_DETAIL_ERROR");
-                return;
+                return false;
             }
 
             String usuario = partes[1];
@@ -309,12 +315,14 @@ public class Cliente implements Runnable {
                 salida.println(json);
             } else {
                 salida.println("TICKET_DETAIL_ERROR");
+                return false;
             }
 
         } catch (Exception e) {
             Log.escribirLog("Error en manejarTicketDetail: " + e.getMessage());
             salida.println("TICKET_DETAIL_ERROR");
         }
+        return true;
     }
 
     /**
@@ -322,11 +330,11 @@ public class Cliente implements Runnable {
      * Protocolo: IMAGE_DATA|usuario|idImagen
      * Respuesta: JSON metadatos + base64 de imagen o IMAGE_DATA_ERROR
      */
-    public void manejarImageData(String[] partes, PrintWriter salida, OutputStream outputStream) {
+    public boolean manejarImageData(String[] partes, PrintWriter salida, OutputStream outputStream) {
         try {
             if (partes.length != 3) {
                 salida.println("IMAGE_DATA_ERROR");
-                return;
+                return false;
             }
 
             int idImagen = Integer.parseInt(partes[2]);
@@ -343,19 +351,21 @@ public class Cliente implements Runnable {
                 salida.flush();
             } else {
                 salida.println("IMAGE_DATA_ERROR");
+                return false;
             }
 
         } catch (Exception e) {
             Log.escribirLog("Error en manejarImageData: " + e.getMessage());
             salida.println("IMAGE_DATA_ERROR");
         }
+        return true;
     }
 
-    public void manejarHistory(String[] partes, PrintWriter salida){
+    public boolean manejarHistory(String[] partes, PrintWriter salida){
         if (partes.length != 2) {
             salida.println("HISTORY_ERROR");
             System.out.println("HISTORY_ERROR");
-            return;
+            return false;
         }
 
         String usuario = partes[1];
@@ -370,23 +380,26 @@ public class Cliente implements Runnable {
             } else {
                 salida.println("HISTORY_ERROR");
                 System.out.println("HISTORY_ERROR");
+                return false;
             }
         } catch (Exception e) {
             Log.escribirLog("Error en manejarHistory: " + e.getMessage());
             salida.println("HISTORY_ERROR");
             System.out.println("HISTORY_ERROR");
         }
+
+        return true;
     }
 
     /**
      * Maneja la edición de un ticket
      * Formato: EDIT|usuario|idTicket|motivo|descripcion
      */
-    public void manejarEdit(String[] partes, PrintWriter salida) {
+    public boolean manejarEdit(String[] partes, PrintWriter salida) {
         try{
             if (partes.length < 5) {
                 salida.println("EDIT_ERROR");
-                return;
+                return false;
             }
 
             String usuario = partes[1];
@@ -397,22 +410,24 @@ public class Cliente implements Runnable {
             boolean ok = TicketDAO.editarTicket(usuario, idTicket, motivo, descripcion);
             salida.println(ok ? "EDIT_OK" : "EDIT_ERROR");
             System.out.println(ok ? "EDIT_OK" : "EDIT_ERROR");
+            return ok;
 
         }catch (Exception e){
             Log.escribirLog("Error en manejarEdit: " + e.getMessage());
             salida.println("EDIT_ERROR");
         }
+        return false;
     }
 
     /**
      * Maneja la eliminación (borrado lógico) de un ticket
      * Formato: DELETE|usuario|idTicket
      */
-    public void manejarDelete(String[] partes, PrintWriter salida) {
+    public boolean manejarDelete(String[] partes, PrintWriter salida) {
         try{
             if (partes.length != 3) {
                 salida.println("DELETE_ERROR");
-                return;
+                return false;
             }
 
             String usuario = partes[1];
@@ -420,8 +435,10 @@ public class Cliente implements Runnable {
             int code = TicketDAO.marcarComoBorrado(usuario, idTicket);
 
             String respuesta;
+            boolean respuestaBoolean = false;
             if (code == 1) {
                 respuesta = "DELETE_OK";
+                respuestaBoolean = true;
             } else if (code == 2) {
                 respuesta = "DELETE_ERROR_TERMINADO";
             } else {
@@ -431,10 +448,14 @@ public class Cliente implements Runnable {
             salida.println(respuesta);
             System.out.println(respuesta);
 
+            return respuestaBoolean;
+
         }catch (Exception e){
             Log.escribirLog("Error en manejarDelete: " + e.getMessage());
             salida.println("DELETE_ERROR");
         }
+
+        return false;
 
     }
 
@@ -442,11 +463,11 @@ public class Cliente implements Runnable {
      * Maneja la reanudación de un ticket en estado Cancelado
      * Formato: RESUME|usuario|idTicket
      */
-    public void manejarResume(String[] partes, PrintWriter salida) {
+    public boolean manejarResume(String[] partes, PrintWriter salida) {
         try{
             if (partes.length != 3) {
                 salida.println("RESUME_ERROR");
-                return;
+                return false;
             }
 
             String usuario = partes[1];
@@ -456,9 +477,13 @@ public class Cliente implements Runnable {
             salida.println(ok ? "RESUME_OK" : "RESUME_ERROR");
             System.out.println(ok ? "RESUME_OK" : "RESUME_ERROR");
 
+            return ok;
+
         }catch (Exception e){
             Log.escribirLog("Error en manejarResume: " + e.getMessage());
             salida.println("RESUME_ERROR");
         }
+
+        return false;
     }
 }
