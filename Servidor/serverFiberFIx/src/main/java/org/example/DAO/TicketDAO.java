@@ -165,7 +165,7 @@ public class TicketDAO {
         }
     }
 
-    // Recuperar historial de Técnico
+    // Recuperar historial de Técnico (con metadatos de imágenes)
     public static String obtenerHistorial(String usuario) {
         StringBuilder json = new StringBuilder();
         json.append("[");
@@ -178,53 +178,72 @@ public class TicketDAO {
                 ORDER BY t.fecha_creacion DESC
                 """;
 
-        try (
-                Connection con = ConexionBD.getConnection();
-                PreparedStatement ps = con.prepareStatement(sql);
-        ){
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            con = ConexionBD.getConnection();
+            ps = con.prepareStatement(sql);
             ps.setString(1, usuario);
-            ResultSet rs = ps.executeQuery();
+            Log.escribirLog("Ejecutando consulta historial para usuario: " + usuario);
+            rs = ps.executeQuery();
 
             boolean primero = true;
+            int contador = 0;
 
             while (rs.next()) {
+                contador++;
                 if (!primero) json.append(",");
                 primero = false;
 
+                int idTicket = rs.getInt("id");
+                int numeroTicket = rs.getInt("numero_ticket");
+                String estado = rs.getString("estado");
+                String motivo = rs.getString("motivo");
+                String descripcion = rs.getString("descripcion");
+                String fechaCreacion = rs.getString("fecha_creacion");
+                String fechaInicio = rs.getString("fecha_inicio");
+                String fechaCierre = rs.getString("fecha_cierre");
+
+                Log.escribirLog("Procesando ticket #" + contador + " - ID: " + idTicket);
+
                 json.append("{")
-                        .append("\"id\":").append(rs.getInt("id")).append(",")
-                        .append("\"numero_ticket\":").append(rs.getInt("numero_ticket")).append(",")
-                        .append("\"estado\":\"").append(rs.getString("estado")).append("\",")
+                        .append("\"id\":").append(idTicket).append(",")
+                        .append("\"numero_ticket\":").append(numeroTicket).append(",")
+                        .append("\"estado\":\"").append(estado).append("\",")
                         .append("\"motivo\":").append(
-                                rs.getString("motivo") == null
-                                        ? "null"
-                                        : "\"" + rs.getString("motivo") + "\""
+                                motivo == null ? "null" : "\"" + motivo + "\""
                         ).append(",")
                         .append("\"descripcion\":").append(
-                                rs.getString("descripcion") == null
-                                        ? "null"
-                                        : "\"" + rs.getString("descripcion") + "\""
+                                descripcion == null ? "null" : "\"" + descripcion + "\""
                         ).append(",")
-                        .append("\"fecha_creacion\":\"").append(rs.getString("fecha_creacion")).append("\",")
+                        .append("\"fecha_creacion\":\"").append(fechaCreacion).append("\",")
                         .append("\"fecha_inicio\":").append(
-                                rs.getString("fecha_inicio") == null
-                                        ? "null"
-                                        : "\"" + rs.getString("fecha_inicio") + "\""
+                                fechaInicio == null ? "null" : "\"" + fechaInicio + "\""
                         ).append(",")
                         .append("\"fecha_cierre\":").append(
-                                rs.getString("fecha_cierre") == null
-                                        ? "null"
-                                        : "\"" + rs.getString("fecha_cierre") + "\""
-                        )
+                                fechaCierre == null ? "null" : "\"" + fechaCierre + "\""
+                        ).append(",")
+                        .append("\"imagenes\":").append(ImagenDAO.obtenerImagenes(idTicket))
                         .append("}");
             }
 
+            Log.escribirLog("Total de tickets encontrados para " + usuario + ": " + contador);
             json.append("]");
             return json.toString();
 
         } catch (Exception e) {
             Log.escribirLog("Error HISTORY: " + e.getMessage());
+            e.printStackTrace();
             return "[]";
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+            } catch (SQLException e) {
+                Log.escribirLog("Error cerrando recursos: " + e.getMessage());
+            }
         }
     }
 
