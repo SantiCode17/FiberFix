@@ -1,0 +1,794 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > TicketDAO</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">org.example.DAO</a>
+</div>
+
+<h1>Coverage Summary for Class: TicketDAO (org.example.DAO)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TicketDAO</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    11,1%
+  </span>
+  <span class="absValue">
+    (2/18)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0,9%
+  </span>
+  <span class="absValue">
+    (1/111)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    3,3%
+  </span>
+  <span class="absValue">
+    (10/303)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package org.example.DAO;
+&nbsp;
+&nbsp;import org.example.DTO.Cliente;
+&nbsp;import org.example.DTO.Estado;
+&nbsp;import org.example.DTO.Ticket;
+&nbsp;import org.example.Server.Log;
+&nbsp;
+&nbsp;import java.sql.*;
+&nbsp;import java.time.LocalDateTime;
+&nbsp;import java.util.ArrayList;
+&nbsp;
+<b class="nc">&nbsp;public class TicketDAO {</b>
+&nbsp;    // Sacar el idTecnico para las consultas
+&nbsp;    private static int obtenerIdTecnico(String usuario) throws SQLException {
+<b class="fc">&nbsp;        String sql = &quot;SELECT id FROM Tecnico WHERE usuario = ?&quot;;</b>
+&nbsp;
+<b class="fc">&nbsp;        Connection con = ConexionBD.getConnection();</b>
+<b class="fc">&nbsp;        PreparedStatement ps = con.prepareStatement(sql);</b>
+<b class="fc">&nbsp;        ps.setString(1, usuario);</b>
+&nbsp;
+<b class="fc">&nbsp;        ResultSet rs = ps.executeQuery();</b>
+&nbsp;
+<b class="pc">&nbsp;        if (rs.next()) {</b>
+<b class="nc">&nbsp;            return rs.getInt(&quot;id&quot;);</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            throw new SQLException(&quot;Técnico no encontrado&quot;);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    // Comprobar si el Ticket ya existe
+&nbsp;    private static boolean existeTicket(int numeroTicket, int idTecnico) throws SQLException {
+<b class="nc">&nbsp;        String sql = &quot;&quot;&quot;</b>
+&nbsp;            SELECT * FROM Ticket
+&nbsp;            WHERE numero_ticket = ? AND id_tecnico = ?
+&nbsp;        &quot;&quot;&quot;;
+&nbsp;
+<b class="nc">&nbsp;        Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;        PreparedStatement ps = con.prepareStatement(sql);</b>
+<b class="nc">&nbsp;        ps.setInt(1, numeroTicket);</b>
+<b class="nc">&nbsp;        ps.setInt(2, idTecnico);</b>
+&nbsp;
+<b class="nc">&nbsp;        ResultSet rs = ps.executeQuery();</b>
+<b class="nc">&nbsp;        return rs.next();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private static String obtenerEstadoTicket(int numeroTicket, int idTecnico) throws SQLException {
+<b class="nc">&nbsp;        String sql = &quot;SELECT estado FROM Ticket WHERE numero_ticket = ? AND id_tecnico = ?&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;        Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;        PreparedStatement ps = con.prepareStatement(sql);</b>
+<b class="nc">&nbsp;        ps.setInt(1, numeroTicket);</b>
+<b class="nc">&nbsp;        ps.setInt(2, idTecnico);</b>
+&nbsp;
+<b class="nc">&nbsp;        ResultSet rs = ps.executeQuery();</b>
+<b class="nc">&nbsp;        if (rs.next()) {</b>
+<b class="nc">&nbsp;            return rs.getString(&quot;estado&quot;);</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return null;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Crear un Ticket
+&nbsp;    public static int iniciarTicket(
+&nbsp;            String usuario,
+&nbsp;            int numeroTicket,
+&nbsp;            LocalDateTime fechaInicio,
+&nbsp;            double lat,
+&nbsp;            double lon
+&nbsp;    ) {
+&nbsp;        try {
+<b class="nc">&nbsp;            int idTecnico = obtenerIdTecnico(usuario); // Sacamos su id</b>
+&nbsp;
+<b class="nc">&nbsp;            if (existeTicket(numeroTicket, idTecnico)) {</b>
+<b class="nc">&nbsp;                String estado = obtenerEstadoTicket(numeroTicket, idTecnico);</b>
+<b class="nc">&nbsp;                if (&quot;Terminado&quot;.equalsIgnoreCase(estado)) {</b>
+<b class="nc">&nbsp;                    Log.escribirLog(&quot;Ticket ya finalizado: &quot; + numeroTicket);</b>
+<b class="nc">&nbsp;                    return 2; // Codigo para ticket ya finalizado</b>
+&nbsp;                }
+<b class="nc">&nbsp;                Log.escribirLog(&quot;Ticket ya existe: &quot; + numeroTicket);</b>
+<b class="nc">&nbsp;                return 0; // El ticket ya existe</b>
+&nbsp;            }
+&nbsp;
+&nbsp;            // Crear el ticket
+<b class="nc">&nbsp;            String sql = &quot;&quot;&quot;</b>
+&nbsp;                INSERT INTO Ticket (numero_ticket, estado, fecha_inicio, id_tecnico)
+&nbsp;                VALUES (?, &#39;Pendiente&#39;, ?, ?)
+&nbsp;            &quot;&quot;&quot;;
+&nbsp;
+<b class="nc">&nbsp;            Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;            PreparedStatement ps = con.prepareStatement(sql);</b>
+<b class="nc">&nbsp;            ps.setInt(1, numeroTicket);</b>
+<b class="nc">&nbsp;            ps.setTimestamp(2, Timestamp.valueOf(fechaInicio));</b>
+<b class="nc">&nbsp;            ps.setInt(3, idTecnico);</b>
+&nbsp;
+<b class="nc">&nbsp;            ps.executeUpdate();</b>
+&nbsp;
+&nbsp;            // Guardar Posicion
+<b class="nc">&nbsp;            PosicionDAO.guardarPosicion(idTecnico, numeroTicket, lat, lon);</b>
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Ticket creado correctamente: &quot; + numeroTicket);</b>
+<b class="nc">&nbsp;            return 1;</b>
+&nbsp;        } catch (SQLException e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error iniciar ticket: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            return -1;</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error inesperado al iniciar ticket: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            return -1;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    // Finalizar un Ticket
+&nbsp;    public static boolean finalizarTicket(
+&nbsp;            String usuario,
+&nbsp;            int numeroTicket,
+&nbsp;            LocalDateTime fechaFin
+&nbsp;    ) {
+&nbsp;        try {
+<b class="nc">&nbsp;            int idTecnico = obtenerIdTecnico(usuario);</b>
+&nbsp;
+<b class="nc">&nbsp;            String sql = &quot;&quot;&quot;</b>
+&nbsp;                UPDATE Ticket SET estado = &#39;Terminado&#39;, fecha_cierre = ?
+&nbsp;                WHERE numero_ticket = ? AND id_tecnico = ?
+&nbsp;            &quot;&quot;&quot;;
+&nbsp;
+<b class="nc">&nbsp;            Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;            PreparedStatement ps = con.prepareStatement(sql);</b>
+<b class="nc">&nbsp;            ps.setTimestamp(1, Timestamp.valueOf(fechaFin));</b>
+<b class="nc">&nbsp;            ps.setInt(2, numeroTicket);</b>
+<b class="nc">&nbsp;            ps.setInt(3, idTecnico);</b>
+&nbsp;
+<b class="nc">&nbsp;            return ps.executeUpdate() == 1;</b>
+&nbsp;
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error finalizar ticket: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            return false;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    // Registrar una incidencia en un Ticket
+&nbsp;    public static boolean registrarIncidencia(
+&nbsp;            String usuario,
+&nbsp;            int numeroTicket,
+&nbsp;            String motivo,
+&nbsp;            String descripcion
+&nbsp;    ) {
+&nbsp;        try {
+<b class="nc">&nbsp;            int idTecnico = obtenerIdTecnico(usuario);</b>
+&nbsp;
+<b class="nc">&nbsp;            String sql = &quot;&quot;&quot;</b>
+&nbsp;                UPDATE Ticket SET estado = &#39;Cancelado&#39;, motivo = ?, descripcion = ?
+&nbsp;                WHERE numero_ticket = ?
+&nbsp;                  AND id_tecnico = ?
+&nbsp;            &quot;&quot;&quot;;
+&nbsp;
+<b class="nc">&nbsp;            Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;            PreparedStatement ps = con.prepareStatement(sql);</b>
+<b class="nc">&nbsp;            ps.setString(1, motivo);</b>
+<b class="nc">&nbsp;            ps.setString(2, descripcion);</b>
+<b class="nc">&nbsp;            ps.setInt(3, numeroTicket);</b>
+<b class="nc">&nbsp;            ps.setInt(4, idTecnico);</b>
+&nbsp;
+<b class="nc">&nbsp;            return ps.executeUpdate() == 1;</b>
+&nbsp;
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error incidencia: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            return false;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    // Recuperar historial de Técnico
+&nbsp;    public static String obtenerHistorial(String usuario) {
+<b class="nc">&nbsp;        StringBuilder json = new StringBuilder();</b>
+<b class="nc">&nbsp;        json.append(&quot;[&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        String sql = &quot;&quot;&quot;</b>
+&nbsp;                SELECT t.id, t.numero_ticket, t.estado, t.motivo, t.descripcion, t.fecha_creacion, t.fecha_inicio, t.fecha_cierre
+&nbsp;                FROM Ticket t
+&nbsp;                JOIN Tecnico te ON t.id_tecnico = te.id
+&nbsp;                WHERE te.usuario = ? AND t.estado != &#39;Borrado&#39;
+&nbsp;                ORDER BY t.fecha_creacion DESC
+&nbsp;                &quot;&quot;&quot;;
+&nbsp;
+&nbsp;        try (
+<b class="nc">&nbsp;                Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;                PreparedStatement ps = con.prepareStatement(sql);</b>
+&nbsp;        ){
+<b class="nc">&nbsp;            ps.setString(1, usuario);</b>
+<b class="nc">&nbsp;            ResultSet rs = ps.executeQuery();</b>
+&nbsp;
+<b class="nc">&nbsp;            boolean primero = true;</b>
+&nbsp;
+<b class="nc">&nbsp;            while (rs.next()) {</b>
+<b class="nc">&nbsp;                if (!primero) json.append(&quot;,&quot;);</b>
+<b class="nc">&nbsp;                primero = false;</b>
+&nbsp;
+<b class="nc">&nbsp;                json.append(&quot;{&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;id\&quot;:&quot;).append(rs.getInt(&quot;id&quot;)).append(&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;numero_ticket\&quot;:&quot;).append(rs.getInt(&quot;numero_ticket&quot;)).append(&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;estado\&quot;:\&quot;&quot;).append(rs.getString(&quot;estado&quot;)).append(&quot;\&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;motivo\&quot;:&quot;).append(</b>
+<b class="nc">&nbsp;                                rs.getString(&quot;motivo&quot;) == null</b>
+<b class="nc">&nbsp;                                        ? &quot;null&quot;</b>
+<b class="nc">&nbsp;                                        : &quot;\&quot;&quot; + rs.getString(&quot;motivo&quot;) + &quot;\&quot;&quot;</b>
+<b class="nc">&nbsp;                        ).append(&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;descripcion\&quot;:&quot;).append(</b>
+<b class="nc">&nbsp;                                rs.getString(&quot;descripcion&quot;) == null</b>
+<b class="nc">&nbsp;                                        ? &quot;null&quot;</b>
+<b class="nc">&nbsp;                                        : &quot;\&quot;&quot; + rs.getString(&quot;descripcion&quot;) + &quot;\&quot;&quot;</b>
+<b class="nc">&nbsp;                        ).append(&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;fecha_creacion\&quot;:\&quot;&quot;).append(rs.getString(&quot;fecha_creacion&quot;)).append(&quot;\&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;fecha_inicio\&quot;:&quot;).append(</b>
+<b class="nc">&nbsp;                                rs.getString(&quot;fecha_inicio&quot;) == null</b>
+<b class="nc">&nbsp;                                        ? &quot;null&quot;</b>
+<b class="nc">&nbsp;                                        : &quot;\&quot;&quot; + rs.getString(&quot;fecha_inicio&quot;) + &quot;\&quot;&quot;</b>
+<b class="nc">&nbsp;                        ).append(&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;fecha_cierre\&quot;:&quot;).append(</b>
+<b class="nc">&nbsp;                                rs.getString(&quot;fecha_cierre&quot;) == null</b>
+<b class="nc">&nbsp;                                        ? &quot;null&quot;</b>
+<b class="nc">&nbsp;                                        : &quot;\&quot;&quot; + rs.getString(&quot;fecha_cierre&quot;) + &quot;\&quot;&quot;</b>
+&nbsp;                        )
+<b class="nc">&nbsp;                        .append(&quot;}&quot;);</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            json.append(&quot;]&quot;);</b>
+<b class="nc">&nbsp;            return json.toString();</b>
+&nbsp;
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error HISTORY: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            return &quot;[]&quot;;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Editar un ticket existente (motivo y descripción)
+&nbsp;     * Solo el técnico propietario del ticket puede editarlo
+&nbsp;     */
+&nbsp;    public static boolean editarTicket(
+&nbsp;            String usuario,
+&nbsp;            int idTicket,
+&nbsp;            String motivo,
+&nbsp;            String descripcion
+&nbsp;    ) {
+&nbsp;        try {
+<b class="nc">&nbsp;            int idTecnico = obtenerIdTecnico(usuario);</b>
+&nbsp;
+<b class="nc">&nbsp;            String sql = &quot;&quot;&quot;</b>
+&nbsp;                UPDATE Ticket 
+&nbsp;                SET motivo = ?, descripcion = ?, fecha_ultima_edicion = NOW()
+&nbsp;                WHERE id = ? AND id_tecnico = ?
+&nbsp;            &quot;&quot;&quot;;
+&nbsp;
+<b class="nc">&nbsp;            Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;            PreparedStatement ps = con.prepareStatement(sql);</b>
+<b class="nc">&nbsp;            ps.setString(1, motivo);</b>
+<b class="nc">&nbsp;            ps.setString(2, descripcion);</b>
+<b class="nc">&nbsp;            ps.setInt(3, idTicket);</b>
+<b class="nc">&nbsp;            ps.setInt(4, idTecnico);</b>
+&nbsp;
+<b class="nc">&nbsp;            boolean resultado = ps.executeUpdate() == 1;</b>
+<b class="nc">&nbsp;            if (resultado) {</b>
+<b class="nc">&nbsp;                Log.escribirLog(&quot;Ticket &quot; + idTicket + &quot; editado por técnico &quot; + usuario);</b>
+&nbsp;            }
+<b class="nc">&nbsp;            return resultado;</b>
+&nbsp;
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error editando ticket: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            return false;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Marcar un ticket como borrado (borrado lógico)
+&nbsp;     * Códigos:
+&nbsp;     *  1 = OK
+&nbsp;     *  2 = ERROR_TERMINADO
+&nbsp;     * -1 = ERROR (no existe o no pertenece al técnico)
+&nbsp;     *  0 = ERROR (otro imprevisto / excepción)
+&nbsp;     */
+&nbsp;    public static int marcarComoBorrado(
+&nbsp;            String usuario,
+&nbsp;            int idTicket
+&nbsp;    ) {
+&nbsp;        try {
+<b class="nc">&nbsp;            int idTecnico = obtenerIdTecnico(usuario);</b>
+&nbsp;
+&nbsp;            // Primero verificar que el ticket pertenece al técnico y obtener su estado
+<b class="nc">&nbsp;            String sqlVerificar = &quot;&quot;&quot;</b>
+&nbsp;                    SELECT estado FROM Ticket
+&nbsp;                    WHERE id = ? AND id_tecnico = ?
+&nbsp;                &quot;&quot;&quot;;
+&nbsp;
+<b class="nc">&nbsp;            Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;            PreparedStatement psVerificar = con.prepareStatement(sqlVerificar);</b>
+<b class="nc">&nbsp;            psVerificar.setInt(1, idTicket);</b>
+<b class="nc">&nbsp;            psVerificar.setInt(2, idTecnico);</b>
+&nbsp;
+<b class="nc">&nbsp;            ResultSet rs = psVerificar.executeQuery();</b>
+<b class="nc">&nbsp;            if (!rs.next()) {</b>
+<b class="nc">&nbsp;                Log.escribirLog(&quot;DELETE: Ticket no existe o no pertenece al técnico. usuario=&quot; + usuario + &quot;, idTicket=&quot; + idTicket);</b>
+<b class="nc">&nbsp;                return -1;</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            String estado = rs.getString(&quot;estado&quot;);</b>
+&nbsp;
+&nbsp;            // Caso especial: ticket terminado
+<b class="nc">&nbsp;            if (&quot;Terminado&quot;.equalsIgnoreCase(estado)) {</b>
+<b class="nc">&nbsp;                Log.escribirLog(&quot;DELETE: Intento de borrar ticket terminado. idTicket=&quot; + idTicket + &quot;, usuario=&quot; + usuario);</b>
+<b class="nc">&nbsp;                return 2;</b>
+&nbsp;            }
+&nbsp;
+&nbsp;            // Solo se pueden borrar tickets pendientes o cancelados
+<b class="nc">&nbsp;            if (!estado.equalsIgnoreCase(&quot;Pendiente&quot;) &amp;&amp; !estado.equalsIgnoreCase(&quot;Cancelado&quot;)) {</b>
+<b class="nc">&nbsp;                Log.escribirLog(&quot;DELETE: Intento de borrar ticket en estado no borrable: &quot; + estado + &quot; (idTicket=&quot; + idTicket + &quot;)&quot;);</b>
+<b class="nc">&nbsp;                return -1;</b>
+&nbsp;            }
+&nbsp;
+&nbsp;            // Marcar como borrado
+<b class="nc">&nbsp;            String sql = &quot;&quot;&quot;</b>
+&nbsp;                    UPDATE Ticket
+&nbsp;                    SET estado = &#39;Borrado&#39;, fecha_ultima_edicion = NOW()
+&nbsp;                    WHERE id = ? AND id_tecnico = ?
+&nbsp;                &quot;&quot;&quot;;
+&nbsp;
+<b class="nc">&nbsp;            PreparedStatement ps = con.prepareStatement(sql);</b>
+<b class="nc">&nbsp;            ps.setInt(1, idTicket);</b>
+<b class="nc">&nbsp;            ps.setInt(2, idTecnico);</b>
+&nbsp;
+<b class="nc">&nbsp;            boolean resultado = ps.executeUpdate() == 1;</b>
+<b class="nc">&nbsp;            if (resultado) {</b>
+<b class="nc">&nbsp;                Log.escribirLog(&quot;Ticket &quot; + idTicket + &quot; marcado como borrado por técnico &quot; + usuario);</b>
+<b class="nc">&nbsp;                return 1;</b>
+&nbsp;            }
+<b class="nc">&nbsp;            return -1;</b>
+&nbsp;
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error borrando ticket: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            return 0;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Reanudar un ticket que estaba en estado Cancelado
+&nbsp;     * Vuelve a estado Pendiente
+&nbsp;     */
+&nbsp;    public static boolean reanudarTicket(
+&nbsp;            String usuario,
+&nbsp;            int idTicket
+&nbsp;    ) {
+&nbsp;        try {
+<b class="fc">&nbsp;            int idTecnico = obtenerIdTecnico(usuario);</b>
+&nbsp;
+<b class="nc">&nbsp;            String sql = &quot;&quot;&quot;</b>
+&nbsp;                UPDATE Ticket 
+&nbsp;                SET estado = &#39;Pendiente&#39;, fecha_ultima_edicion = NOW()
+&nbsp;                WHERE id = ? AND id_tecnico = ? AND estado = &#39;Cancelado&#39;
+&nbsp;            &quot;&quot;&quot;;
+&nbsp;
+<b class="nc">&nbsp;            Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;            PreparedStatement ps = con.prepareStatement(sql);</b>
+<b class="nc">&nbsp;            ps.setInt(1, idTicket);</b>
+<b class="nc">&nbsp;            ps.setInt(2, idTecnico);</b>
+&nbsp;
+<b class="nc">&nbsp;            boolean resultado = ps.executeUpdate() == 1;</b>
+<b class="nc">&nbsp;            if (resultado) {</b>
+<b class="nc">&nbsp;                Log.escribirLog(&quot;Ticket &quot; + idTicket + &quot; reanudado por técnico &quot; + usuario);</b>
+&nbsp;            } else {
+<b class="nc">&nbsp;                Log.escribirLog(&quot;No se pudo reanudar ticket &quot; + idTicket + &quot; - puede que no esté en estado Cancelado&quot;);</b>
+&nbsp;            }
+<b class="nc">&nbsp;            return resultado;</b>
+&nbsp;
+&nbsp;        } catch (Exception e) {
+<b class="fc">&nbsp;            Log.escribirLog(&quot;Error reanudando ticket: &quot; + e.getMessage());</b>
+<b class="fc">&nbsp;            return false;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Obtener el ID de un ticket por su número
+&nbsp;     * Usado para guardar imágenes y auditoría
+&nbsp;     *
+&nbsp;     * @param numeroTicket Número del ticket
+&nbsp;     * @param idTecnico ID del técnico propietario
+&nbsp;     * @return ID del ticket, -1 si no existe
+&nbsp;     */
+&nbsp;    public static int obtenerIdTicket(int numeroTicket, int idTecnico) {
+<b class="nc">&nbsp;        String sql = &quot;SELECT id FROM Ticket WHERE numero_ticket = ? AND id_tecnico = ?&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;        try (Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;             PreparedStatement ps = con.prepareStatement(sql)) {</b>
+&nbsp;
+<b class="nc">&nbsp;            ps.setInt(1, numeroTicket);</b>
+<b class="nc">&nbsp;            ps.setInt(2, idTecnico);</b>
+&nbsp;
+<b class="nc">&nbsp;            ResultSet rs = ps.executeQuery();</b>
+<b class="nc">&nbsp;            if (rs.next()) {</b>
+<b class="nc">&nbsp;                return rs.getInt(&quot;id&quot;);</b>
+&nbsp;            }
+&nbsp;
+&nbsp;        } catch (SQLException e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error obteniendo ID de ticket: &quot; + e.getMessage());</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return -1;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Obtener detalles completos de un ticket (incluyendo imágenes)
+&nbsp;     *
+&nbsp;     * @param usuario Usuario (técnico)
+&nbsp;     * @param idTicket ID del ticket
+&nbsp;     * @return String JSON con detalles del ticket e imágenes
+&nbsp;     */
+&nbsp;    public static String obtenerDetalleTicket(String usuario, int idTicket) {
+&nbsp;        try {
+<b class="nc">&nbsp;            int idTecnico = obtenerIdTecnico(usuario);</b>
+&nbsp;
+<b class="nc">&nbsp;            String sql = &quot;&quot;&quot;</b>
+&nbsp;                SELECT id, numero_ticket, estado, motivo, descripcion, 
+&nbsp;                       fecha_creacion, fecha_inicio, fecha_cierre, fecha_ultima_edicion
+&nbsp;                FROM Ticket
+&nbsp;                WHERE id = ? AND id_tecnico = ?
+&nbsp;            &quot;&quot;&quot;;
+&nbsp;
+<b class="nc">&nbsp;            Connection con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;            PreparedStatement ps = con.prepareStatement(sql);</b>
+<b class="nc">&nbsp;            ps.setInt(1, idTicket);</b>
+<b class="nc">&nbsp;            ps.setInt(2, idTecnico);</b>
+&nbsp;
+<b class="nc">&nbsp;            ResultSet rs = ps.executeQuery();</b>
+<b class="nc">&nbsp;            if (rs.next()) {</b>
+<b class="nc">&nbsp;                StringBuilder json = new StringBuilder();</b>
+<b class="nc">&nbsp;                json.append(&quot;{&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;id\&quot;:&quot;).append(rs.getInt(&quot;id&quot;)).append(&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;numero_ticket\&quot;:&quot;).append(rs.getInt(&quot;numero_ticket&quot;)).append(&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;estado\&quot;:\&quot;&quot;).append(rs.getString(&quot;estado&quot;)).append(&quot;\&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;motivo\&quot;:&quot;).append(</b>
+<b class="nc">&nbsp;                                rs.getString(&quot;motivo&quot;) == null ? &quot;null&quot; : &quot;\&quot;&quot; + rs.getString(&quot;motivo&quot;) + &quot;\&quot;&quot;</b>
+<b class="nc">&nbsp;                        ).append(&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;descripcion\&quot;:&quot;).append(</b>
+<b class="nc">&nbsp;                                rs.getString(&quot;descripcion&quot;) == null ? &quot;null&quot; : &quot;\&quot;&quot; + rs.getString(&quot;descripcion&quot;) + &quot;\&quot;&quot;</b>
+<b class="nc">&nbsp;                        ).append(&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;fecha_creacion\&quot;:\&quot;&quot;).append(rs.getString(&quot;fecha_creacion&quot;)).append(&quot;\&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;fecha_inicio\&quot;:&quot;).append(</b>
+<b class="nc">&nbsp;                                rs.getString(&quot;fecha_inicio&quot;) == null ? &quot;null&quot; : &quot;\&quot;&quot; + rs.getString(&quot;fecha_inicio&quot;) + &quot;\&quot;&quot;</b>
+<b class="nc">&nbsp;                        ).append(&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;fecha_cierre\&quot;:&quot;).append(</b>
+<b class="nc">&nbsp;                                rs.getString(&quot;fecha_cierre&quot;) == null ? &quot;null&quot; : &quot;\&quot;&quot; + rs.getString(&quot;fecha_cierre&quot;) + &quot;\&quot;&quot;</b>
+<b class="nc">&nbsp;                        ).append(&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;fecha_ultima_edicion\&quot;:&quot;).append(</b>
+<b class="nc">&nbsp;                                rs.getString(&quot;fecha_ultima_edicion&quot;) == null ? &quot;null&quot; : &quot;\&quot;&quot; + rs.getString(&quot;fecha_ultima_edicion&quot;) + &quot;\&quot;&quot;</b>
+<b class="nc">&nbsp;                        ).append(&quot;,&quot;)</b>
+<b class="nc">&nbsp;                        .append(&quot;\&quot;imagenes\&quot;:&quot;).append(ImagenDAO.obtenerImagenes(idTicket))</b>
+<b class="nc">&nbsp;                        .append(&quot;}&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;                return json.toString();</b>
+&nbsp;            }
+&nbsp;
+&nbsp;        } catch (SQLException e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error obteniendo detalle de ticket: &quot; + e.getMessage());</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return null;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Registrar una incidencia con imágenes (versión mejorada)
+&nbsp;     * Guarda la incidencia y todas las imágenes asociadas en una transacción
+&nbsp;     *
+&nbsp;     * @param usuario Usuario (técnico)
+&nbsp;     * @param numeroTicket Número del ticket
+&nbsp;     * @param motivo Motivo de la incidencia
+&nbsp;     * @param descripcion Descripción de la incidencia
+&nbsp;     * @param imagenes Array de byte arrays con datos de imágenes
+&nbsp;     * @param nombreArchivos Array de nombres de archivos
+&nbsp;     * @param tiposMime Array de tipos MIME
+&nbsp;     * @param tamaños Array de tamaños en bytes
+&nbsp;     * @return true si se guardó correctamente (incluyendo todas las imágenes)
+&nbsp;     */
+&nbsp;    public static boolean registrarIncidenciaConImagenes(
+&nbsp;            String usuario,
+&nbsp;            int numeroTicket,
+&nbsp;            String motivo,
+&nbsp;            String descripcion,
+&nbsp;            byte[][] imagenes,
+&nbsp;            String[] nombreArchivos,
+&nbsp;            String[] tiposMime,
+&nbsp;            long[] tamaños
+&nbsp;    ) {
+<b class="nc">&nbsp;        Connection con = null;</b>
+&nbsp;        try {
+<b class="nc">&nbsp;            int idTecnico = obtenerIdTecnico(usuario);</b>
+<b class="nc">&nbsp;            int idTicket = obtenerIdTicket(numeroTicket, idTecnico);</b>
+&nbsp;
+<b class="nc">&nbsp;            if (idTicket == -1) {</b>
+<b class="nc">&nbsp;                Log.escribirLog(&quot;Error: Ticket &quot; + numeroTicket + &quot; no encontrado para usuario &quot; + usuario);</b>
+<b class="nc">&nbsp;                return false;</b>
+&nbsp;            }
+&nbsp;
+&nbsp;            // Desactivar auto-commit para transacción
+<b class="nc">&nbsp;            con = ConexionBD.getConnection();</b>
+<b class="nc">&nbsp;            con.setAutoCommit(false);</b>
+&nbsp;
+&nbsp;            // 1. Actualizar el estado del ticket
+<b class="nc">&nbsp;            String sqlTicket = &quot;&quot;&quot;</b>
+&nbsp;                UPDATE Ticket SET estado = &#39;Cancelado&#39;, motivo = ?, descripcion = ?
+&nbsp;                WHERE id = ? AND id_tecnico = ?
+&nbsp;            &quot;&quot;&quot;;
+&nbsp;
+<b class="nc">&nbsp;            PreparedStatement psTicket = con.prepareStatement(sqlTicket);</b>
+<b class="nc">&nbsp;            psTicket.setString(1, motivo);</b>
+<b class="nc">&nbsp;            psTicket.setString(2, descripcion);</b>
+<b class="nc">&nbsp;            psTicket.setInt(3, idTicket);</b>
+<b class="nc">&nbsp;            psTicket.setInt(4, idTecnico);</b>
+&nbsp;
+<b class="nc">&nbsp;            if (psTicket.executeUpdate() != 1) {</b>
+<b class="nc">&nbsp;                con.rollback();</b>
+<b class="nc">&nbsp;                Log.escribirLog(&quot;Error: No se pudo actualizar el ticket &quot; + numeroTicket);</b>
+<b class="nc">&nbsp;                return false;</b>
+&nbsp;            }
+&nbsp;
+&nbsp;            // 2. Guardar imágenes si existen
+<b class="nc">&nbsp;            if (imagenes != null &amp;&amp; imagenes.length &gt; 0) {</b>
+<b class="nc">&nbsp;                for (int i = 0; i &lt; imagenes.length; i++) {</b>
+<b class="nc">&nbsp;                    if (!ImagenDAO.guardarImagen(</b>
+&nbsp;                            idTicket,
+&nbsp;                            imagenes[i],
+<b class="nc">&nbsp;                            nombreArchivos != null &amp;&amp; i &lt; nombreArchivos.length ? nombreArchivos[i] : &quot;imagen_&quot; + i,</b>
+<b class="nc">&nbsp;                            tiposMime != null &amp;&amp; i &lt; tiposMime.length ? tiposMime[i] : &quot;image/jpeg&quot;,</b>
+<b class="nc">&nbsp;                            tamaños != null &amp;&amp; i &lt; tamaños.length ? tamaños[i] : imagenes[i].length,</b>
+&nbsp;                            null
+&nbsp;                    )) {
+<b class="nc">&nbsp;                        con.rollback();</b>
+<b class="nc">&nbsp;                        Log.escribirLog(&quot;Error: Falló al guardar imagen &quot; + i + &quot; para ticket &quot; + numeroTicket);</b>
+<b class="nc">&nbsp;                        return false;</b>
+&nbsp;                    }
+&nbsp;                }
+&nbsp;            }
+&nbsp;
+&nbsp;            // 3. Registrar en auditoría
+<b class="nc">&nbsp;            String sqlAuditoria = &quot;&quot;&quot;</b>
+&nbsp;                INSERT INTO Auditoria_Ticket (id_ticket, id_tecnico, accion, descripcion)
+&nbsp;                VALUES (?, ?, ?, ?)
+&nbsp;            &quot;&quot;&quot;;
+&nbsp;
+<b class="nc">&nbsp;            PreparedStatement psAuditoria = con.prepareStatement(sqlAuditoria);</b>
+<b class="nc">&nbsp;            psAuditoria.setInt(1, idTicket);</b>
+<b class="nc">&nbsp;            psAuditoria.setInt(2, idTecnico);</b>
+<b class="nc">&nbsp;            psAuditoria.setString(3, &quot;INCIDENCIA_REGISTRADA&quot;);</b>
+<b class="nc">&nbsp;            psAuditoria.setString(4, motivo + &quot; - &quot; + descripcion);</b>
+<b class="nc">&nbsp;            psAuditoria.executeUpdate();</b>
+&nbsp;
+&nbsp;            // Confirmar transacción
+<b class="nc">&nbsp;            con.commit();</b>
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Incidencia registrada correctamente para ticket &quot; + numeroTicket </b>
+<b class="nc">&nbsp;                    + &quot; con &quot; + (imagenes != null ? imagenes.length : 0) + &quot; imágenes&quot;);</b>
+<b class="nc">&nbsp;            return true;</b>
+&nbsp;
+&nbsp;        } catch (SQLException e) {
+&nbsp;            try {
+<b class="nc">&nbsp;                if (con != null) {</b>
+<b class="nc">&nbsp;                    con.rollback();</b>
+<b class="nc">&nbsp;                    Log.escribirLog(&quot;Transacción revertida por error: &quot; + e.getMessage());</b>
+&nbsp;                }
+&nbsp;            } catch (SQLException rollbackEx) {
+<b class="nc">&nbsp;                Log.escribirLog(&quot;Error al revertir transacción: &quot; + rollbackEx.getMessage());</b>
+&nbsp;            }
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error registrando incidencia con imágenes: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            return false;</b>
+&nbsp;        } finally {
+<b class="nc">&nbsp;            if (con != null) {</b>
+&nbsp;                try {
+<b class="nc">&nbsp;                    con.setAutoCommit(true);</b>
+&nbsp;                } catch (SQLException e) {
+<b class="nc">&nbsp;                    Log.escribirLog(&quot;Error reseteando autoCommit: &quot; + e.getMessage());</b>
+&nbsp;                }
+&nbsp;                try {
+&nbsp;                    con.close();
+&nbsp;                } catch (SQLException e) {
+<b class="nc">&nbsp;                    Log.escribirLog(&quot;Error cerrando conexión: &quot; + e.getMessage());</b>
+&nbsp;                }
+&nbsp;            }
+&nbsp;        }
+&nbsp;    }
+&nbsp;    public static ArrayList&lt;Ticket&gt; obtenerTickets(){
+<b class="nc">&nbsp;        String sql = &quot;SELECT * FROM Ticket&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;        ArrayList&lt;Ticket&gt; tickets = new ArrayList&lt;&gt;();</b>
+&nbsp;
+&nbsp;        try{
+<b class="nc">&nbsp;            Statement statement = ConexionBD.getConnection().createStatement();</b>
+<b class="nc">&nbsp;            ResultSet resultSet = statement.executeQuery(sql);</b>
+&nbsp;
+<b class="nc">&nbsp;            while (resultSet.next()){</b>
+<b class="nc">&nbsp;                Estado estado=Estado.CANCELADO;</b>
+<b class="nc">&nbsp;                switch (resultSet.getString(3)){</b>
+&nbsp;                    case &quot;Pendiente&quot;:
+<b class="nc">&nbsp;                        estado=Estado.PENDIENTE;</b>
+&nbsp;                        break;
+&nbsp;                    case &quot;En Proceso&quot;:
+<b class="nc">&nbsp;                        estado=Estado.ENPROCESO;</b>
+&nbsp;                        break;
+&nbsp;                    case &quot;Terminado&quot;:
+<b class="nc">&nbsp;                        estado=Estado.TERMINADO;</b>
+&nbsp;                        break;
+&nbsp;                }
+<b class="nc">&nbsp;                Timestamp tsInicio = resultSet.getTimestamp(7);</b>
+<b class="nc">&nbsp;                Timestamp tsCierre = resultSet.getTimestamp(8);</b>
+&nbsp;
+<b class="nc">&nbsp;                tickets.add(new Ticket(</b>
+<b class="nc">&nbsp;                        resultSet.getInt(1),</b>
+&nbsp;                        estado,
+<b class="nc">&nbsp;                        resultSet.getTimestamp(6).toLocalDateTime(),</b>
+<b class="nc">&nbsp;                        resultSet.getString(5),</b>
+<b class="nc">&nbsp;                        tsInicio != null ? tsInicio.toLocalDateTime() : null,</b>
+<b class="nc">&nbsp;                        tsCierre != null ? tsCierre.toLocalDateTime() : null,</b>
+<b class="nc">&nbsp;                        resultSet.getInt(9),</b>
+<b class="nc">&nbsp;                        resultSet.getString(10)</b>
+&nbsp;                ));
+&nbsp;            }
+&nbsp;
+&nbsp;            statement.close();
+&nbsp;            resultSet.close();
+&nbsp;
+&nbsp;        } catch (SQLException e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error al cargar tickets: &quot;+e);</b>
+<b class="nc">&nbsp;            throw new RuntimeException(e);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return tickets;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    public static boolean crearTicket(Ticket ticket){
+<b class="nc">&nbsp;        String sql = &quot;INSERT INTO Ticket (numero_ticket,estado,descripcion,fecha_creacion,id_tecnico,dni_cliente) VALUES (?,&#39;Pendiente&#39;,?,?,?,?);&quot;;</b>
+&nbsp;        try{
+<b class="nc">&nbsp;            PreparedStatement preparedStatement = ConexionBD.getConnection().prepareStatement(sql);</b>
+<b class="nc">&nbsp;            preparedStatement.setInt(1,ticket.getId());</b>
+<b class="nc">&nbsp;            preparedStatement.setString(2, ticket.getDescripcion());</b>
+&nbsp;            // Convertir LocalDateTime a Timestamp
+<b class="nc">&nbsp;            preparedStatement.setTimestamp(3, java.sql.Timestamp.valueOf(ticket.getFechaCreacion()));</b>
+<b class="nc">&nbsp;            preparedStatement.setInt(4, ticket.getId_tecnico());</b>
+<b class="nc">&nbsp;            preparedStatement.setString(5, ticket.getDni());</b>
+&nbsp;
+<b class="nc">&nbsp;            int filas = preparedStatement.executeUpdate();</b>
+<b class="nc">&nbsp;            return filas == 1;</b>
+&nbsp;        } catch (SQLException e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error al crear ticket: &quot;+e.getMessage());</b>
+<b class="nc">&nbsp;            throw new RuntimeException(e);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    public static boolean comprobarTicket(int id){
+<b class="nc">&nbsp;        String sql = &quot;SELECT * FROM Ticket WHERE numero_ticket = ?&quot;;</b>
+&nbsp;
+&nbsp;        try{
+<b class="nc">&nbsp;          PreparedStatement preparedStatement = ConexionBD.getConnection().prepareStatement(sql);</b>
+<b class="nc">&nbsp;          preparedStatement.setInt(1, id);</b>
+<b class="nc">&nbsp;          ResultSet resultSet = preparedStatement.executeQuery();</b>
+<b class="nc">&nbsp;          return resultSet.next();</b>
+&nbsp;
+&nbsp;        } catch (SQLException e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error al comprobar ticket: &quot;+e.getMessage());</b>
+<b class="nc">&nbsp;            throw new RuntimeException(e);</b>
+&nbsp;        }
+&nbsp;
+&nbsp;    }
+&nbsp;
+&nbsp;    public static boolean eliminarTicket(int numero_ticket){
+<b class="nc">&nbsp;        String sql = &quot;DELETE FROM Ticket WHERE numero_ticket = ?&quot;;</b>
+&nbsp;
+&nbsp;        try{
+<b class="nc">&nbsp;            PreparedStatement preparedStatement = ConexionBD.getConnection().prepareStatement(sql);</b>
+<b class="nc">&nbsp;            preparedStatement.setInt(1,numero_ticket);</b>
+<b class="nc">&nbsp;            int filas = preparedStatement.executeUpdate();</b>
+<b class="nc">&nbsp;            return filas == 1;</b>
+&nbsp;        } catch (SQLException e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error al eliminar ticket: &quot;+e.getMessage());</b>
+<b class="nc">&nbsp;            throw new RuntimeException(e);</b>
+&nbsp;        }
+&nbsp;
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-02 10:25</div>
+</div>
+</body>
+</html>
