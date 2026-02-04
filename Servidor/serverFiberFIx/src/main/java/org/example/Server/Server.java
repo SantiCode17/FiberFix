@@ -1,6 +1,5 @@
 package org.example.Server;
 
-import org.example.DAO.ClienteDAO;
 import org.example.DAO.TecnicoDAO;
 import org.example.DAO.TicketDAO;
 import org.example.DTO.Tecnico;
@@ -13,8 +12,13 @@ import java.util.Scanner;
 
 public class Server {
 
-
     public static void main(String[] args) {
+        // Si se pasa "server" como argumento, iniciar el servidor directamente
+        if (args.length > 0 && args[0].equals("server")) {
+            servidor();
+            return;
+        }
+        
         Scanner sc = new Scanner(System.in);
         String opcion = "0";
         while (!opcion.equals("3")){
@@ -59,32 +63,10 @@ public class Server {
                                 }
                                 break;
                             case "3":
-                                ClienteDAO.obtenerCLientes().forEach(c -> c.mostrar());
+                                System.out.println("Gestión de clientes deshabilitada.");
                                 break;
                             case "4":
-                                String dni;
-                                do{
-                                    System.out.print("Ingrese el dni: ");
-                                    dni = sc.nextLine();
-                                    if (ClienteDAO.comprobarCliente(dni)){
-                                        System.out.println("El cliente ya existe");
-                                    }
-                                }while (ClienteDAO.comprobarCliente(dni));
-
-                                System.out.print("Introduzca el nombre: ");
-                                String nombreCliente = sc.nextLine();
-                                System.out.print("Introduzca el apellido: ");
-                                String apellidoCliente = sc.nextLine();
-                                System.out.print("Introduzca la direccion: ");
-                                String direccionCliente = sc.nextLine();
-                                System.out.print("Introduzca el telefono: ");
-                                String telefonoCliente = sc.nextLine();
-                                org.example.DTO.Cliente cliente = new org.example.DTO.Cliente(dni, nombreCliente, apellidoCliente, direccionCliente, telefonoCliente);
-                                if (ClienteDAO.insertarCliente(cliente)){
-                                    System.out.println("El cliente se ha insertado correctamente");
-                                } else {
-                                    System.out.println("El cliente no se ha insertado");
-                                }
+                                System.out.println("Gestión de clientes deshabilitada.");
                                 break;
                             case "5":
                                 TicketDAO.obtenerTickets().forEach(t -> t.mostrar());
@@ -118,10 +100,7 @@ public class Server {
                                 do{
                                     System.out.print("Ingrese el dni del cliente: ");
                                     dniTicket = sc.nextLine();
-                                    if (!ClienteDAO.comprobarCliente(dniTicket)){
-                                        System.out.println("El cliente no existe");
-                                    }
-                                }while (!ClienteDAO.comprobarCliente(dniTicket));
+                                }while (!dniTicket.matches(".*"));
 
                                 Ticket ticket = new Ticket(idTecnico, descripcion, idTecnico, dniTicket);
 

@@ -1,0 +1,590 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > Cliente</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">org.example.Server</a>
+</div>
+
+<h1>Coverage Summary for Class: Cliente (org.example.Server)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">Cliente</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    15,4%
+  </span>
+  <span class="absValue">
+    (2/13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    3,4%
+  </span>
+  <span class="absValue">
+    (3/87)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    3,9%
+  </span>
+  <span class="absValue">
+    (9/229)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package org.example.Server;
+&nbsp;
+&nbsp;import org.example.DAO.*;
+&nbsp;
+&nbsp;import java.io.*;
+&nbsp;import java.net.Socket;
+&nbsp;import java.nio.charset.StandardCharsets;
+&nbsp;import java.time.LocalDateTime;
+&nbsp;import java.time.format.DateTimeFormatter;
+&nbsp;
+&nbsp;public class Cliente implements Runnable {
+&nbsp;
+&nbsp;    Socket socket;
+&nbsp;
+<b class="fc">&nbsp;    public Cliente(Socket socket) {</b>
+<b class="fc">&nbsp;        this.socket = socket;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void run() {
+<b class="nc">&nbsp;        PrintWriter salida = null;</b>
+&nbsp;        try (
+<b class="nc">&nbsp;                BufferedReader entrada = new BufferedReader(</b>
+<b class="nc">&nbsp;                        new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));</b>
+<b class="nc">&nbsp;                InputStream inputStream = socket.getInputStream();</b>
+<b class="nc">&nbsp;                OutputStream outputStream = socket.getOutputStream();</b>
+&nbsp;        ) {
+<b class="nc">&nbsp;            salida = new PrintWriter(</b>
+<b class="nc">&nbsp;                    new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);</b>
+<b class="nc">&nbsp;            String mensaje = entrada.readLine();</b>
+<b class="nc">&nbsp;            if (mensaje == null) return;</b>
+&nbsp;
+<b class="nc">&nbsp;            System.out.println(Thread.currentThread().getName()+&quot; dice: &quot; + mensaje);</b>
+&nbsp;
+<b class="nc">&nbsp;            String[] partes = mensaje.split(&quot;\\|&quot;);</b>
+<b class="nc">&nbsp;            String accion = partes[0];</b>
+&nbsp;
+<b class="nc">&nbsp;            switch (accion) {</b>
+&nbsp;                case &quot;LOGIN&quot;:
+<b class="nc">&nbsp;                    manejarLogin(partes, salida);</b>
+&nbsp;                    break;
+&nbsp;                case &quot;START&quot;:
+<b class="nc">&nbsp;                    manejarStart(partes, salida);</b>
+&nbsp;                    break;
+&nbsp;                case &quot;FINISH&quot;:
+<b class="nc">&nbsp;                    manejarFinish(partes, salida);</b>
+&nbsp;                    break;
+&nbsp;                case &quot;INCIDENT&quot;:
+<b class="nc">&nbsp;                    manejarIncident(partes, salida);</b>
+&nbsp;                    break;
+&nbsp;                case &quot;INCIDENT_WITH_IMAGES&quot;:
+<b class="nc">&nbsp;                    manejarIncidentConImagenes(salida, inputStream);</b>
+&nbsp;                    break;
+&nbsp;                case &quot;HISTORY&quot;:
+<b class="nc">&nbsp;                    manejarHistory(partes, salida);</b>
+&nbsp;                    break;
+&nbsp;                case &quot;TICKET_DETAIL&quot;:
+<b class="nc">&nbsp;                    manejarTicketDetail(partes, salida);</b>
+&nbsp;                    break;
+&nbsp;                case &quot;IMAGE_DATA&quot;:
+<b class="nc">&nbsp;                    manejarImageData(partes, salida, outputStream);</b>
+&nbsp;                    break;
+&nbsp;                case &quot;EDIT&quot;:
+<b class="nc">&nbsp;                    manejarEdit(partes, salida);</b>
+&nbsp;                    break;
+&nbsp;                case &quot;DELETE&quot;:
+<b class="nc">&nbsp;                    manejarDelete(partes, salida);</b>
+&nbsp;                    break;
+&nbsp;                case &quot;RESUME&quot;:
+<b class="nc">&nbsp;                    manejarResume(partes, salida);</b>
+&nbsp;                    break;
+&nbsp;                default:
+<b class="nc">&nbsp;                    salida.println(&quot;ERROR_UNKNOWN_ACTION&quot;);</b>
+&nbsp;            }
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            Log.escribirLog(e.getMessage());</b>
+<b class="nc">&nbsp;            if (salida != null) {</b>
+<b class="nc">&nbsp;                salida.println(&quot;SERVER_ERROR&quot;);</b>
+&nbsp;            }
+&nbsp;        } finally {
+&nbsp;            try {
+<b class="nc">&nbsp;                socket.close();</b>
+&nbsp;            } catch (IOException e) {
+<b class="nc">&nbsp;                Log.escribirLog(e.getMessage());</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    public boolean manejarLogin(String[] partes, PrintWriter salida) {
+<b class="nc">&nbsp;        if (partes.length != 3) {</b>
+<b class="nc">&nbsp;            salida.println(&quot;LOGIN_ERROR&quot;);</b>
+<b class="nc">&nbsp;            return false;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        boolean ok = TecnicoDAO.loginCorrecto(partes[1], partes[2]);</b>
+<b class="nc">&nbsp;        salida.println(ok ? &quot;LOGIN_OK&quot; : &quot;LOGIN_ERROR&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(ok ? &quot;LOGIN_OK&quot; : &quot;LOGIN_ERROR&quot;);</b>
+<b class="nc">&nbsp;        return ok;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void manejarStart (String[] partes, PrintWriter salida) {
+&nbsp;        try {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Procesando mensaje START: &quot; + String.join(&quot;|&quot;, partes));</b>
+&nbsp;
+<b class="nc">&nbsp;            String usuario = partes[1];</b>
+<b class="nc">&nbsp;            int numTicket = Integer.parseInt(partes[2]);</b>
+<b class="nc">&nbsp;            double lat = Double.parseDouble(partes[3]);</b>
+<b class="nc">&nbsp;            double lon = Double.parseDouble(partes[4]);</b>
+<b class="nc">&nbsp;            LocalDateTime fecha = LocalDateTime.parse(partes[5], DateTimeFormatter.ISO_DATE_TIME);</b>
+&nbsp;
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Datos extraídos: usuario=&quot; + usuario + &quot;, numTicket=&quot; + numTicket + &quot;, lat=&quot; + lat + &quot;, lon=&quot; + lon + &quot;, fecha=&quot; + fecha);</b>
+&nbsp;
+<b class="nc">&nbsp;            int ok = TicketDAO.iniciarTicket(usuario, numTicket, fecha, lat, lon);</b>
+&nbsp;            String respuesta;
+<b class="nc">&nbsp;            if (ok == 1) {</b>
+<b class="nc">&nbsp;                respuesta = &quot;START_OK&quot;;</b>
+<b class="nc">&nbsp;            } else if (ok == 0) {</b>
+<b class="nc">&nbsp;                respuesta = &quot;START_OK_EXISTENTE&quot;;</b>
+<b class="nc">&nbsp;            } else if (ok == 2) {</b>
+<b class="nc">&nbsp;                respuesta = &quot;START_ERROR_FINALIZADO&quot;;</b>
+&nbsp;            } else {
+<b class="nc">&nbsp;                respuesta = &quot;START_ERROR&quot;;</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Respuesta generada: &quot; + respuesta);</b>
+<b class="nc">&nbsp;            System.out.println(respuesta);</b>
+<b class="nc">&nbsp;            salida.println(respuesta);</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            System.out.println(&quot;[START] EXCEPCIÓN&quot;);</b>
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error en manejarStart: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            salida.println(&quot;START_ERROR&quot;);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    public boolean manejarFinish(String[] partes, PrintWriter salida) {
+&nbsp;        try{
+<b class="nc">&nbsp;            String usuario = partes[1];</b>
+<b class="nc">&nbsp;            int numTicket = Integer.parseInt(partes[2]);</b>
+<b class="nc">&nbsp;            LocalDateTime fecha = LocalDateTime.parse(partes[3], DateTimeFormatter.ISO_DATE_TIME);</b>
+&nbsp;
+<b class="nc">&nbsp;            boolean ok = TicketDAO.finalizarTicket(usuario, numTicket, fecha);</b>
+<b class="nc">&nbsp;            salida.println(ok ? &quot;FINISH_OK&quot; : &quot;FINISH_ERROR&quot;);</b>
+<b class="nc">&nbsp;            System.out.println(ok ? &quot;FINISH_OK&quot; : &quot;FINISH_ERROR&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;            return ok;</b>
+&nbsp;
+&nbsp;        }catch (Exception e){
+<b class="nc">&nbsp;            salida.println(&quot;FINISH_ERROR&quot;);</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return false;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void manejarIncident(String[] partes, PrintWriter salida) {
+&nbsp;        try{
+<b class="nc">&nbsp;            String usuario = partes[1];</b>
+<b class="nc">&nbsp;            int numTicket = Integer.parseInt(partes[2]);</b>
+<b class="nc">&nbsp;            String motivo = partes[3];</b>
+<b class="nc">&nbsp;            String nota = partes[4];</b>
+&nbsp;
+<b class="nc">&nbsp;            boolean ok = TicketDAO.registrarIncidencia(usuario, numTicket, motivo, nota);</b>
+<b class="nc">&nbsp;            salida.println(ok ? &quot;INCIDENT_OK&quot; : &quot;INCIDENT_ERROR&quot;);</b>
+<b class="nc">&nbsp;            System.out.println(ok ? &quot;INCIDENT_OK&quot; : &quot;INCIDENT_ERROR&quot;);</b>
+&nbsp;        }catch (Exception e){
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error en manejarIncident: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            salida.println(&quot;INCIDENT_ERROR&quot;);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Maneja incidencias con imágenes
+&nbsp;     * Protocolo: INCIDENT_WITH_IMAGES|usuario|numeroTicket|motivo|descripcion|numImágenes
+&nbsp;     * Seguido de datos binarios de imágenes
+&nbsp;     */
+&nbsp;    public boolean manejarIncidentConImagenes(PrintWriter salida, InputStream entrada) {
+&nbsp;        try {
+<b class="nc">&nbsp;            DataInputStream dis = new DataInputStream(entrada);</b>
+<b class="nc">&nbsp;            BufferedReader br = new BufferedReader(</b>
+&nbsp;                    new InputStreamReader(entrada, StandardCharsets.UTF_8)
+&nbsp;            );
+&nbsp;
+&nbsp;            // Leer encabezado
+<b class="nc">&nbsp;            String headerLine = br.readLine();</b>
+<b class="nc">&nbsp;            if (headerLine == null) {</b>
+<b class="nc">&nbsp;                salida.println(&quot;INCIDENT_WITH_IMAGES_ERROR&quot;);</b>
+<b class="nc">&nbsp;                return false;</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            String[] partes = headerLine.split(&quot;\\|&quot;);</b>
+<b class="nc">&nbsp;            if (partes.length &lt; 6) {</b>
+<b class="nc">&nbsp;                salida.println(&quot;INCIDENT_WITH_IMAGES_ERROR&quot;);</b>
+<b class="nc">&nbsp;                return false;</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            String usuario = partes[1];</b>
+<b class="nc">&nbsp;            int numeroTicket = Integer.parseInt(partes[2]);</b>
+<b class="nc">&nbsp;            String motivo = partes[3];</b>
+<b class="nc">&nbsp;            String descripcion = partes[4];</b>
+<b class="nc">&nbsp;            int numImagenes = Integer.parseInt(partes[5]);</b>
+&nbsp;
+&nbsp;            // Validar número de imágenes
+<b class="nc">&nbsp;            if (numImagenes &lt; 0 || numImagenes &gt; 5) {</b>
+<b class="nc">&nbsp;                salida.println(&quot;INCIDENT_WITH_IMAGES_ERROR&quot;);</b>
+<b class="nc">&nbsp;                return false;</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            byte[][] datosImagenes = new byte[numImagenes][];</b>
+<b class="nc">&nbsp;            String[] nombresArchivos = new String[numImagenes];</b>
+<b class="nc">&nbsp;            String[] tiposMime = new String[numImagenes];</b>
+<b class="nc">&nbsp;            long[] tamaños = new long[numImagenes];</b>
+&nbsp;
+&nbsp;            // Leer datos de imágenes
+<b class="nc">&nbsp;            for (int i = 0; i &lt; numImagenes; i++) {</b>
+&nbsp;                // Leer metadatos: nombreArchivo|tipoMime|tamaño
+<b class="nc">&nbsp;                String metadataLine = br.readLine();</b>
+<b class="nc">&nbsp;                if (metadataLine == null) {</b>
+<b class="nc">&nbsp;                    salida.println(&quot;INCIDENT_WITH_IMAGES_ERROR&quot;);</b>
+<b class="nc">&nbsp;                    return false;</b>
+&nbsp;                }
+&nbsp;
+<b class="nc">&nbsp;                String[] metadata = metadataLine.split(&quot;\\|&quot;);</b>
+<b class="nc">&nbsp;                if (metadata.length != 3) {</b>
+<b class="nc">&nbsp;                    salida.println(&quot;INCIDENT_WITH_IMAGES_ERROR&quot;);</b>
+<b class="nc">&nbsp;                    return false;</b>
+&nbsp;                }
+&nbsp;
+<b class="nc">&nbsp;                nombresArchivos[i] = metadata[0];</b>
+<b class="nc">&nbsp;                tiposMime[i] = metadata[1];</b>
+<b class="nc">&nbsp;                long tamanoByte = Long.parseLong(metadata[2]);</b>
+<b class="nc">&nbsp;                tamaños[i] = tamanoByte;</b>
+&nbsp;
+&nbsp;                // Validaciones
+<b class="nc">&nbsp;                if (tamanoByte &gt; 5 * 1024 * 1024) { // 5MB max</b>
+<b class="nc">&nbsp;                    Log.escribirLog(&quot;Imagen demasiado grande: &quot; + tamanoByte + &quot; bytes&quot;);</b>
+<b class="nc">&nbsp;                    salida.println(&quot;INCIDENT_WITH_IMAGES_ERROR&quot;);</b>
+<b class="nc">&nbsp;                    return false;</b>
+&nbsp;                }
+&nbsp;
+<b class="nc">&nbsp;                if (!tiposMime[i].startsWith(&quot;image/&quot;)) {</b>
+<b class="nc">&nbsp;                    Log.escribirLog(&quot;Tipo MIME no permitido: &quot; + tiposMime[i]);</b>
+<b class="nc">&nbsp;                    salida.println(&quot;INCIDENT_WITH_IMAGES_ERROR&quot;);</b>
+<b class="nc">&nbsp;                    return false;</b>
+&nbsp;                }
+&nbsp;
+&nbsp;                // Leer datos binarios
+<b class="nc">&nbsp;                datosImagenes[i] = new byte[(int) tamanoByte];</b>
+<b class="nc">&nbsp;                int bytesLeidos = dis.read(datosImagenes[i], 0, (int) tamanoByte);</b>
+<b class="nc">&nbsp;                if (bytesLeidos != tamanoByte) {</b>
+<b class="nc">&nbsp;                    Log.escribirLog(&quot;Error leyendo imagen &quot; + i + &quot;: esperaba &quot; + tamanoByte + &quot;, leídos &quot; + bytesLeidos);</b>
+<b class="nc">&nbsp;                    salida.println(&quot;INCIDENT_WITH_IMAGES_ERROR&quot;);</b>
+<b class="nc">&nbsp;                    return false;</b>
+&nbsp;                }
+&nbsp;            }
+&nbsp;
+&nbsp;            // Guardar incidencia con imágenes (con transacción)
+<b class="nc">&nbsp;            boolean ok = TicketDAO.registrarIncidenciaConImagenes(</b>
+&nbsp;                    usuario,
+&nbsp;                    numeroTicket,
+&nbsp;                    motivo,
+&nbsp;                    descripcion,
+&nbsp;                    datosImagenes,
+&nbsp;                    nombresArchivos,
+&nbsp;                    tiposMime,
+&nbsp;                    tamaños
+&nbsp;            );
+&nbsp;
+<b class="nc">&nbsp;            if (ok) {</b>
+<b class="nc">&nbsp;                salida.println(&quot;INCIDENT_WITH_IMAGES_OK&quot;);</b>
+<b class="nc">&nbsp;                System.out.println(&quot;INCIDENT_WITH_IMAGES_OK&quot;);</b>
+&nbsp;            } else {
+<b class="nc">&nbsp;                salida.println(&quot;INCIDENT_WITH_IMAGES_ERROR&quot;);</b>
+<b class="nc">&nbsp;                System.out.println(&quot;INCIDENT_WITH_IMAGES_ERROR&quot;);</b>
+&nbsp;            }
+<b class="nc">&nbsp;            return ok;</b>
+&nbsp;
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error en manejarIncidentConImagenes: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            e.printStackTrace();</b>
+<b class="nc">&nbsp;            salida.println(&quot;INCIDENT_WITH_IMAGES_ERROR&quot;);</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return true;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Obtener detalle de un ticket con imágenes
+&nbsp;     * Protocolo: TICKET_DETAIL|usuario|idTicket
+&nbsp;     */
+&nbsp;    public boolean manejarTicketDetail(String[] partes, PrintWriter salida) {
+&nbsp;        try {
+<b class="nc">&nbsp;            if (partes.length != 3) {</b>
+<b class="nc">&nbsp;                salida.println(&quot;TICKET_DETAIL_ERROR&quot;);</b>
+<b class="nc">&nbsp;                return false;</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            String usuario = partes[1];</b>
+<b class="nc">&nbsp;            int idTicket = Integer.parseInt(partes[2]);</b>
+&nbsp;
+<b class="nc">&nbsp;            String json = TicketDAO.obtenerDetalleTicket(usuario, idTicket);</b>
+<b class="nc">&nbsp;            if (json != null) {</b>
+<b class="nc">&nbsp;                salida.println(json);</b>
+&nbsp;            } else {
+<b class="nc">&nbsp;                salida.println(&quot;TICKET_DETAIL_ERROR&quot;);</b>
+<b class="nc">&nbsp;                return false;</b>
+&nbsp;            }
+&nbsp;
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error en manejarTicketDetail: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            salida.println(&quot;TICKET_DETAIL_ERROR&quot;);</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return true;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Obtener datos binarios de una imagen
+&nbsp;     * Protocolo: IMAGE_DATA|usuario|idImagen
+&nbsp;     * Respuesta: bytes de imagen o IMAGE_DATA_ERROR
+&nbsp;     */
+&nbsp;    public boolean manejarImageData(String[] partes, PrintWriter salida, OutputStream outputStream) {
+&nbsp;        try {
+<b class="nc">&nbsp;            if (partes.length != 3) {</b>
+<b class="nc">&nbsp;                salida.println(&quot;IMAGE_DATA_ERROR&quot;);</b>
+<b class="nc">&nbsp;                return false;</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            int idImagen = Integer.parseInt(partes[2]);</b>
+<b class="nc">&nbsp;            byte[] datos = ImagenDAO.obtenerDatosImagen(idImagen);</b>
+&nbsp;
+<b class="nc">&nbsp;            if (datos != null) {</b>
+&nbsp;                // Enviar metadatos primero
+<b class="nc">&nbsp;                String metadata = ImagenDAO.obtenerMetadatosImagen(idImagen);</b>
+<b class="nc">&nbsp;                salida.println(metadata);</b>
+&nbsp;
+&nbsp;                // Luego enviar datos binarios
+<b class="nc">&nbsp;                DataOutputStream dos = new DataOutputStream(outputStream);</b>
+<b class="nc">&nbsp;                dos.writeInt(datos.length);</b>
+<b class="nc">&nbsp;                dos.write(datos);</b>
+<b class="nc">&nbsp;                dos.flush();</b>
+&nbsp;            } else {
+<b class="nc">&nbsp;                salida.println(&quot;IMAGE_DATA_ERROR&quot;);</b>
+<b class="nc">&nbsp;                return false;</b>
+&nbsp;            }
+&nbsp;
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error en manejarImageData: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            salida.println(&quot;IMAGE_DATA_ERROR&quot;);</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return true;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public boolean manejarHistory(String[] partes, PrintWriter salida){
+<b class="nc">&nbsp;        if (partes.length != 2) {</b>
+<b class="nc">&nbsp;            salida.println(&quot;HISTORY_ERROR&quot;);</b>
+<b class="nc">&nbsp;            System.out.println(&quot;HISTORY_ERROR&quot;);</b>
+<b class="nc">&nbsp;            return false;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        String usuario = partes[1];</b>
+&nbsp;
+&nbsp;        try {
+<b class="nc">&nbsp;            String json = TicketDAO.obtenerHistorial(usuario);</b>
+&nbsp;
+&nbsp;            // Si hay respuesta (aunque sea &quot;[]&quot;), lo consideramos OK.
+<b class="nc">&nbsp;            if (json != null) {</b>
+<b class="nc">&nbsp;                salida.println(json);</b>
+<b class="nc">&nbsp;                System.out.println(&quot;HISTORY_OK&quot;);</b>
+&nbsp;            } else {
+<b class="nc">&nbsp;                salida.println(&quot;HISTORY_ERROR&quot;);</b>
+<b class="nc">&nbsp;                System.out.println(&quot;HISTORY_ERROR&quot;);</b>
+<b class="nc">&nbsp;                return false;</b>
+&nbsp;            }
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error en manejarHistory: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            salida.println(&quot;HISTORY_ERROR&quot;);</b>
+<b class="nc">&nbsp;            System.out.println(&quot;HISTORY_ERROR&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return true;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Maneja la edición de un ticket
+&nbsp;     * Formato: EDIT|usuario|idTicket|motivo|descripcion
+&nbsp;     */
+&nbsp;    public boolean manejarEdit(String[] partes, PrintWriter salida) {
+&nbsp;        try{
+<b class="nc">&nbsp;            if (partes.length &lt; 5) {</b>
+<b class="nc">&nbsp;                salida.println(&quot;EDIT_ERROR&quot;);</b>
+<b class="nc">&nbsp;                return false;</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            String usuario = partes[1];</b>
+<b class="nc">&nbsp;            int idTicket = Integer.parseInt(partes[2]);</b>
+<b class="nc">&nbsp;            String motivo = partes[3];</b>
+<b class="nc">&nbsp;            String descripcion = partes[4];</b>
+&nbsp;
+<b class="nc">&nbsp;            boolean ok = TicketDAO.editarTicket(usuario, idTicket, motivo, descripcion);</b>
+<b class="nc">&nbsp;            salida.println(ok ? &quot;EDIT_OK&quot; : &quot;EDIT_ERROR&quot;);</b>
+<b class="nc">&nbsp;            System.out.println(ok ? &quot;EDIT_OK&quot; : &quot;EDIT_ERROR&quot;);</b>
+<b class="nc">&nbsp;            return ok;</b>
+&nbsp;
+&nbsp;        }catch (Exception e){
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error en manejarEdit: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            salida.println(&quot;EDIT_ERROR&quot;);</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return false;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Maneja la eliminación (borrado lógico) de un ticket
+&nbsp;     * Formato: DELETE|usuario|idTicket
+&nbsp;     */
+&nbsp;    public boolean manejarDelete(String[] partes, PrintWriter salida) {
+&nbsp;        try{
+<b class="nc">&nbsp;            if (partes.length != 3) {</b>
+<b class="nc">&nbsp;                salida.println(&quot;DELETE_ERROR&quot;);</b>
+<b class="nc">&nbsp;                return false;</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            String usuario = partes[1];</b>
+<b class="nc">&nbsp;            int idTicket = Integer.parseInt(partes[2]);</b>
+<b class="nc">&nbsp;            int code = TicketDAO.marcarComoBorrado(usuario, idTicket);</b>
+&nbsp;
+&nbsp;            String respuesta;
+<b class="nc">&nbsp;            boolean respuestaBoolean = false;</b>
+<b class="nc">&nbsp;            if (code == 1) {</b>
+<b class="nc">&nbsp;                respuesta = &quot;DELETE_OK&quot;;</b>
+<b class="nc">&nbsp;                respuestaBoolean = true;</b>
+<b class="nc">&nbsp;            } else if (code == 2) {</b>
+<b class="nc">&nbsp;                respuesta = &quot;DELETE_ERROR_TERMINADO&quot;;</b>
+&nbsp;            } else {
+<b class="nc">&nbsp;                respuesta = &quot;DELETE_ERROR&quot;;</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            salida.println(respuesta);</b>
+<b class="nc">&nbsp;            System.out.println(respuesta);</b>
+&nbsp;
+<b class="nc">&nbsp;            return respuestaBoolean;</b>
+&nbsp;
+&nbsp;        }catch (Exception e){
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error en manejarDelete: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            salida.println(&quot;DELETE_ERROR&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return false;</b>
+&nbsp;
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Maneja la reanudación de un ticket en estado Cancelado
+&nbsp;     * Formato: RESUME|usuario|idTicket
+&nbsp;     */
+&nbsp;    public boolean manejarResume(String[] partes, PrintWriter salida) {
+&nbsp;        try{
+<b class="pc">&nbsp;            if (partes.length != 3) {</b>
+<b class="nc">&nbsp;                salida.println(&quot;RESUME_ERROR&quot;);</b>
+<b class="nc">&nbsp;                return false;</b>
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            String usuario = partes[1];</b>
+<b class="fc">&nbsp;            int idTicket = Integer.parseInt(partes[2]);</b>
+&nbsp;
+<b class="fc">&nbsp;            boolean ok = TicketDAO.reanudarTicket(usuario, idTicket);</b>
+<b class="pc">&nbsp;            salida.println(ok ? &quot;RESUME_OK&quot; : &quot;RESUME_ERROR&quot;);</b>
+<b class="pc">&nbsp;            System.out.println(ok ? &quot;RESUME_OK&quot; : &quot;RESUME_ERROR&quot;);</b>
+&nbsp;
+<b class="fc">&nbsp;            return ok;</b>
+&nbsp;
+&nbsp;        }catch (Exception e){
+<b class="nc">&nbsp;            Log.escribirLog(&quot;Error en manejarResume: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;            salida.println(&quot;RESUME_ERROR&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return false;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-02 10:25</div>
+</div>
+</body>
+</html>
