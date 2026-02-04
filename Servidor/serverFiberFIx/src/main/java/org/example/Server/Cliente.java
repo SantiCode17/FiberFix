@@ -175,7 +175,7 @@ public class Cliente implements Runnable {
      *   2. Para cada imagen: nombreArchivo|tipoMime|tamaño
      *   3. Para cada imagen: datosBase64 (en una línea)
      */
-    public void manejarIncidentConImagenes(PrintWriter salida, BufferedReader br, String headerLine) {
+    public boolean manejarIncidentConImagenes(PrintWriter salida, BufferedReader br, String headerLine) {
         try {
             // Ya tenemos el encabezado leído
             if (headerLine == null) {
@@ -247,7 +247,7 @@ public class Cliente implements Runnable {
                 if (base64Line == null || base64Line.isEmpty()) {
                     Log.escribirLog("Error leyendo datos base64 de imagen " + i);
                     salida.println("INCIDENT_WITH_IMAGES_ERROR");
-                    return;
+                    return false;
                 }
 
                 try {
@@ -258,7 +258,7 @@ public class Cliente implements Runnable {
                     if (datosImagenes[i].length > 5 * 1024 * 1024) {
                         Log.escribirLog("Imagen decodificada demasiado grande: " + datosImagenes[i].length + " bytes");
                         salida.println("INCIDENT_WITH_IMAGES_ERROR");
-                        return;
+                        return false;
                     }
                 } catch (IllegalArgumentException e) {
                     Log.escribirLog("Error decodificando base64 de imagen " + i + ": " + e.getMessage());
