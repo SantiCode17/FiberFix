@@ -1,0 +1,182 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > Tecnico</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">org.example.DTO</a>
+</div>
+
+<h1>Coverage Summary for Class: Tecnico (org.example.DTO)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">Tecnico</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/12)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/28)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package org.example.DTO;
+&nbsp;
+&nbsp;public class Tecnico {
+&nbsp;    private int id;
+&nbsp;    private String usuario;
+&nbsp;    private String contrasenya;
+&nbsp;    private String nombre;
+&nbsp;    private String apellido;
+&nbsp;
+<b class="nc">&nbsp;    public Tecnico(String usuario, String contrasenya, String nombre, String apellido) {</b>
+<b class="nc">&nbsp;        this.usuario = usuario;</b>
+<b class="nc">&nbsp;        this.contrasenya = contrasenya;</b>
+<b class="nc">&nbsp;        this.nombre = nombre;</b>
+<b class="nc">&nbsp;        this.apellido = apellido;</b>
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    public Tecnico(int id, String usuario, String contrasenya, String nombre, String apellido) {</b>
+<b class="nc">&nbsp;        this.id = id;</b>
+<b class="nc">&nbsp;        this.usuario = usuario;</b>
+<b class="nc">&nbsp;        this.contrasenya = contrasenya;</b>
+<b class="nc">&nbsp;        this.nombre = nombre;</b>
+<b class="nc">&nbsp;        this.apellido = apellido;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public int getId() {
+<b class="nc">&nbsp;        return id;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getUsuario() {
+<b class="nc">&nbsp;        return usuario;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getContrasenya() {
+<b class="nc">&nbsp;        return contrasenya;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getNombre() {
+<b class="nc">&nbsp;        return nombre;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getApellido() {
+<b class="nc">&nbsp;        return apellido;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setUsuario(String usuario) {
+<b class="nc">&nbsp;        this.usuario = usuario;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setContrasenya(String contrasenya) {
+<b class="nc">&nbsp;        this.contrasenya = contrasenya;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setNombre(String nombre) {
+<b class="nc">&nbsp;        this.nombre = nombre;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setApellido(String apellido) {
+<b class="nc">&nbsp;        this.apellido = apellido;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void mostrar() {
+<b class="nc">&nbsp;        final String RESET = &quot;\u001B[0m&quot;;</b>
+<b class="nc">&nbsp;        final String AZUL = &quot;\u001B[34m&quot;;</b>
+<b class="nc">&nbsp;        final String VERDE = &quot;\u001B[32m&quot;;</b>
+<b class="nc">&nbsp;        final String AMARILLO = &quot;\u001B[33m&quot;;</b>
+<b class="nc">&nbsp;        final String ROJO = &quot;\u001B[31m&quot;;</b>
+<b class="nc">&nbsp;        final String CYAN = &quot;\u001B[36m&quot;;</b>
+<b class="nc">&nbsp;        final String GRIS = &quot;\u001B[90m&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;        System.out.println(</b>
+&nbsp;                CYAN + &quot;[Técnico #&quot; + id + &quot;] &quot; + RESET +
+&nbsp;                        &quot;Usuario: &quot; + AZUL + usuario + RESET +
+&nbsp;                        &quot; | Nombre: &quot; + VERDE + nombre + &quot; &quot; + apellido + RESET +
+&nbsp;                        &quot; | Pass: &quot; + GRIS + contrasenya + RESET
+&nbsp;        );
+&nbsp;    }
+&nbsp;
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-02 10:25</div>
+</div>
+</body>
+</html>
