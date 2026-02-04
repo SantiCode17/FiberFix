@@ -10,7 +10,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import TcpSocket from 'react-native-tcp-socket';
 
 // Tipo de dato mejorado
@@ -182,9 +182,11 @@ export default function ExploreScreen() {
 
         const cliente = TcpSocket.createConnection({ host: SERVER_IP, port: SERVER_PORT }, async () => {
           try {
-            // Construir payload usando nuevas líneas simples (coincide con sendIncidentWithImages)
+            // Usar motivo y descripción originales del ticket
+            let motivo = selectedTicket?.motivo || '';
+            let descripcion = selectedTicket?.descripcion || '';
             let payload = '';
-            payload += `INCIDENT_WITH_IMAGES|${userId}|${numeroTicket}|EDIT_ADD_IMAGES|Añadiendo imágenes|${imagenData.length}\n`;
+            payload += `INCIDENT_WITH_IMAGES|${userId}|${numeroTicket}|${motivo}|${descripcion}|${imagenData.length}\n`;
 
             for (const img of imagenData) {
               payload += `${img.name}|${img.type}|${img.size}\n`;
@@ -445,7 +447,7 @@ export default function ExploreScreen() {
         const timeout = setTimeout(() => {
           cliente.end();
           reject(new Error('Timeout descargando imagen'));
-        }, 30000);
+        }, 100000);
 
         cliente.on('data', (data: any) => {
           try {
@@ -830,9 +832,15 @@ export default function ExploreScreen() {
                       <View className="mb-4">
                         <ImageGallery
                           images={selectedTicket.imagenes}
-                          isLoading={false}
+                          isLoading={isLoading}
                           onDownloadImage={(imageId) => downloadImage(imageId)}
                         />
+                        {isLoading && (
+                          <View className="flex-row items-center justify-center mt-4">
+                            <ActivityIndicator size="large" color="#3B82F6" />
+                            <Text className="ml-3 text-blue-500 font-bold text-base">Cargando imágenes</Text>
+                          </View>
+                        )}
                       </View>
                     )}
 
@@ -846,9 +854,15 @@ export default function ExploreScreen() {
                   <View className="mb-8">
                     <ImageGallery
                       images={selectedTicket.imagenes}
-                      isLoading={false}
+                      isLoading={isLoading}
                       onDownloadImage={(imageId) => downloadImage(imageId)}
                     />
+                    {isLoading && (
+                      <View className="flex-row items-center justify-center mt-4">
+                        <ActivityIndicator size="large" color="#3B82F6" />
+                        <Text className="ml-3 text-blue-500 font-bold text-base">Cargando imágenes</Text>
+                      </View>
+                    )}
                   </View>
                 ) : (
                   <View className="border-2 border-dashed border-gray-200 rounded-3xl h-40 items-center justify-center bg-gray-50 mb-8">

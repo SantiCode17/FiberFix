@@ -268,7 +268,8 @@ export default function TicketScreen() {
         await sendViaSocket(incidenciaMsg);
       }
 
-      showSuccess('¡Incidencia Registrada!', 'El reporte se ha enviado correctamente con ' + selectedImages.length + (selectedImages.length === 1 ? ' imagen' : ' imágenes'));
+      setShowSuccessBubble({ message: '¡Incidencia registrada!' });
+      setTimeout(() => setShowSuccessBubble(null), 2500);
       setShowIncidentModal(false);
       setIsWorking(false);
       setTicketNumber('');
@@ -786,7 +787,7 @@ export default function TicketScreen() {
         </View>
       )}
 
-      {/* ALERTA DE ÉXITO GLOBAL - SIEMPRE AL FINAL PARA ESTAR SOBRE TODO */}
+      {/* ALERTA DE ÉXITO GLOBAL */}
       {showSuccessBubble && (
         <View
           style={{
