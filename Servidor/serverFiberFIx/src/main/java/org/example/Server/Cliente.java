@@ -90,7 +90,7 @@ public class Cliente implements Runnable {
         if (partes.length != 3) {
             salida.println("LOGIN_ERROR");
             salida.flush();
-            return;
+            return false;
         }
 
         boolean ok = TecnicoDAO.loginCorrecto(partes[1], partes[2]);
