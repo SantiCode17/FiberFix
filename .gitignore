@@ -1,0 +1,10 @@
+# Logs
+*.log
+
+# MySQL
+docker_listo/mysql-rds/data/
+**/data/db/
+**/mysql/
+
+# Docker
+#.env en trabajos reales no se subiría, pero aquí sí
