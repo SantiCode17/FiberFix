@@ -1,164 +1,134 @@
-# FiberFix – Sistema de cierre automático de trabajos
+# FiberFix — Automated Job-Closure System
 
-Proyecto académico desarrollado para el cliente **FiberFix (Instalaciones Técnicas)**, una subcontrata de instalaciones de fibra óptica con técnicos en la calle.
+A mobile + server system that lets fibre-optic field technicians close work orders by submitting their GPS location to a central server, reducing administrative errors and speeding up billing.
 
-El objetivo del sistema es **automatizar el cierre de partes de trabajo** mediante el envío de la ubicación del técnico, reduciendo errores administrativos y acelerando la facturación.
+![Java](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)
+![React Native](https://img.shields.io/badge/React_Native-Expo-61dafb?logo=react&logoColor=black)
+![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow)
 
----
+## Overview
 
-## Objetivo del proyecto
+FiberFix is an academic project developed for **FiberFix (Instalaciones Técnicas)**, a fibre-optic installation subcontractor with field technicians out on site. The goal is to automate the closing of work orders: a technician opens the app, enters their identifier and the ticket identifier, and the app sends their current GPS location plus a timestamp to a central server, which records the closure. Built as a team project for the DAM cross-platform development diploma.
 
-Permitir que un técnico cierre un ticket de trabajo enviando:
-- Su identificador
-- El identificador del ticket
-- Su ubicación GPS
-- La fecha y hora del cierre
+## Tech Stack
 
-El sistema valida y registra esta información en un servidor central.
+- **Mobile**: React Native (Expo), TypeScript
+- **Backend**: Java multi-threaded TCP socket server
+- **Database**: MySQL 8
+- **Infrastructure**: Docker (database and server containers)
 
----
+## Architecture
 
-## Arquitectura general
+```
+┌────────────────────┐       TCP/IP        ┌─────────────────────┐
+│ Mobile app         │ ──────────────────▶ │ Java multi-thread   │
+│ React Native       │  pipe-delimited     │ socket server       │
+│ (technician)       │   payload           │ (one thread / conn) │
+└────────────────────┘                     └──────────┬──────────┘
+                                                      │ JDBC
+                                                      ▼
+                                            ┌─────────────────────┐
+                                            │ MySQL 8             │
+                                            │ technicians,        │
+                                            │ tickets, closures   │
+                                            └─────────────────────┘
+```
 
-- **App móvil (React Native)**  
-  Aplicación sencilla usada por los técnicos para enviar su ubicación y cerrar trabajos.
+A technician launches the app, types their technician ID and the ticket ID, and taps **Close job**. The app fetches the device GPS, builds a pipe-delimited payload and ships it over a TCP socket. The Java server accepts the connection, parses the message, validates the technician and ticket, and writes the closure to MySQL.
 
-- **Servidor (Java)**  
-  Servidor multihilo que recibe los datos de los técnicos mediante sockets TCP.
+### Message format
 
-- **Base de datos (MySQL)**  
-  Almacena técnicos, tickets y registros de cierre.
+```
+ID_TECHNICIAN|ID_TICKET|LATITUDE|LONGITUDE|TIMESTAMP
+```
 
----
+Example:
 
-## Flujo básico del sistema
-
-1. El técnico abre la aplicación móvil
-2. Introduce su ID y el ID del ticket
-3. Pulsa el botón "Cerrar trabajo"
-4. La app obtiene la ubicación GPS
-5. Se envían los datos al servidor
-6. El servidor registra el cierre del ticket
-
----
-
-## Formato del mensaje (provisional)
-
-Los datos se envían como texto plano:
-
-ID_TECNICO|ID_TICKET|LATITUD|LONGITUD|TIMESTAMP
-
-Ejemplo:
-
+```
 TEC123|TICK987|39.4699|-0.3763|2025-12-16T10:45:00
-
----
-
-## Equipo
-
-Proyecto realizado por un equipo de 4 personas como parte de un trabajo académico:
-
-CARLOS FERNÁNDEZ HERVÁS
-
-ANDREI FELIPE STAICU
-
-MARÍA JURADO IBÁÑEZ
-
-SANTIAGO SÁNCHEZ MARCH
-
----
-
-## Tecnologías
-
-- Java
-- React Native
-- MySQL
-- Git / GitHub
-
----
-
-# Flujo de trabajo recomendado
-
-Este repositorio ya existe en remoto, por lo que el primer paso siempre será clonarlo. Todo el desarrollo se hace siguiendo un flujo basado en ramas `feature` y `release`.
-
-## 0. Clonar el repositorio
-```bash
-git clone <url-del-repositorio>
-cd FiberFix
 ```
 
-## 1. Mantener el repositorio local actualizado
+## Features
 
-Antes de empezar cualquier tarea, asegúrate de tener la rama `release` actualizada:
+- Field technicians can close a ticket directly from the mobile app
+- GPS location captured automatically when the closure is submitted
+- Java server accepts concurrent connections (one thread per client)
+- MySQL persistence for technicians, tickets and closure records
+- Docker setup for the database and the server
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js ≥ 18 and Expo CLI for the mobile app
+- Java 21 for the server
+- Docker and Docker Compose for MySQL
+- An Android/iOS device with Expo Go, or an emulator
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/SantiCode17/FiberFix.git
+   cd FiberFix
+   ```
+2. Start the MySQL database and server containers from `docker_listo/`.
+3. Install the mobile dependencies:
+   ```bash
+   cd fiberfix-mobile
+   npm install
+   ```
+
+### Configuration
+
+The mobile app reads the server endpoint from a local `.env` file. Copy the template and point it to the machine running the Java server:
+
 ```bash
-git fetch origin
-git checkout release
-git pull origin release
+cp fiberfix-mobile/.env.example fiberfix-mobile/.env
 ```
 
-## 2. Crear una rama para una tarea
-
-Cada desarrollador debe crear su propia rama a partir de `release`. Siempre una rama por tarea, siguiendo el formato: `feature-nombre-tarea-nombre-desarrollador` para más claridad del respto de cmpañeros.
-```bash
-git checkout release
-git checkout -b feature-login-maria
+```env
+EXPO_PUBLIC_SERVER_IP=192.168.1.100
+EXPO_PUBLIC_SERVER_PORT=5000
 ```
 
-## 3. Programar y guardar cambios
+### Usage
 
-Durante el desarrollo, guarda los cambios con commits pequeños y descriptivos:
+Start the mobile app:
+
 ```bash
-git status
-git add .
-git commit -m "Descripción clara del cambio"
+cd fiberfix-mobile
+npx expo start
 ```
 
-## 4. Integrar cambios en `release` (sin subir tu rama al remoto)
+Scan the QR with Expo Go or press `a` to launch on Android emulator.
 
-Las ramas de tarea **NO** se suben al repositorio remoto. Todo el proceso se hace por consola y solo se sube `release`.
+## Project Structure
 
-1. Asegúrate de tener `release` actualizada:
-```bash
-git checkout release
-git pull origin release
+```
+FiberFix/
+├── fiberfix-mobile/       React Native (Expo) app for technicians
+├── Servidor/              Java TCP socket server
+├── docker_listo/          Docker setup (MySQL + server containers)
+├── scripts/               Helper scripts
+└── server.properties      Server configuration
 ```
 
-2. Fusiona tu rama en `release`:
-```bash
-git checkout release
-git merge feature-login-maria
-```
+## Team
 
-## 5. Subir cambios a remoto y limpiar ramas
+Academic team project developed as part of the DAM diploma:
 
-1. Subir solo la rama `release` al repositorio remoto:
-```bash
-git push origin release
-```
+- Carlos Fernández Hervás
+- Andrei Felipe Staicu
+- María Jurado Ibáñez
+- Santiago Sánchez March
 
-2. Eliminar la rama local de la tarea (una vez integrado):
-```bash
-git branch -d feature-login-maria
-```
+## License
 
-De esta forma, el repositorio remoto solo contiene la rama principal `release` y las ramas de desarrollo individuales nunca se suben.
+Released under the [MIT License](LICENSE). Originally developed as an academic project at IES Salvador Gadea.
 
-## Buenas prácticas
+## Author
 
-- **Una rama por tarea**
-- Cada desarrollador trabaja en su propia rama con su nombre
-- Commits pequeños y claros
-- Mantener `release` actualizada frecuentemente
-- No forzar pushes (`--force`)
-- No trabajar directamente sobre `release`
-- Formato de nombres: `feature-descripcion-nombre`
-
-## Comandos útiles
-```bash
-git branch            # ver ramas locales
-git branch -a         # ver ramas locales y remotas
-git checkout nombre   # cambiar de rama
-git log --oneline     # ver historial compacto
-git status            # ver estado actual
-git branch -d nombre  # eliminar rama local
-```
+**Santiago Sánchez March** — [GitHub](https://github.com/SantiCode17) · [LinkedIn](https://www.linkedin.com/in/santiago-s%C3%A1nchez-march/)
