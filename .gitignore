@@ -1,10 +1,28 @@
 # Logs
 *.log
 
+# Environment variables — never commit, always provide a .env.example
+.env
+.env.local
+.env.*.local
+
 # MySQL
 docker_listo/mysql-rds/data/
 **/data/db/
 **/mysql/
 
-# Docker
-#.env en trabajos reales no se subiría, pero aquí sí
+# Node / Expo (mobile)
+node_modules/
+.expo/
+dist/
+web-build/
+
+# Java / build outputs (server)
+Servidor/**/target/
+Servidor/**/build/
+*.class
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
