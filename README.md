@@ -83,7 +83,10 @@ TEC123|TICK987|39.4699|-0.3763|2025-12-16T10:45:00
 
 ### Configuration
 
-The mobile app reads the server endpoint from a local `.env` file. Copy the template and point it to the machine running the Java server:
+The project ships with placeholder credentials so nothing real is checked in. Before launching the stack, replace them with values of your choice:
+
+1. **MySQL credentials** — copy `docker_listo/mysql-rds/.env.example` to `.env` and pick a strong password. Search and replace every occurrence of `CHANGE_ME_ROOT_PASSWORD` and `CHANGE_ME_USER_PASSWORD` in `server.properties`, `Servidor/serverFiberFIx/server.properties` and the `docker_listo/init-db*.sh` scripts with the same values.
+2. **Mobile endpoint** — the mobile app reads the server endpoint from a local `.env` file:
 
 ```bash
 cp fiberfix-mobile/.env.example fiberfix-mobile/.env
